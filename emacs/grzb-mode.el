@@ -5,14 +5,15 @@
 (setq while-font-lock-keywords
       (let* (
             ;; define several category of keywords
-            (x-keywords '("begin" "if" "while" "assert" "axiom"))
+            ;(x-keywords '("begin" "if" "while" "while\\*" "assert" "axiom"))
             (x-operators '(":="))
 	    
             ;; generate regex string for each category of keywords
-            (x-keywords-regexp (regexp-opt x-keywords 'words))
-            ;;(x-types-regexp "{[^}]*}")
+	    ;(x-keywords-regexp (regexp-opt x-keywords 'words))
+	    (x-keywords-regexp "([ ]*\\(begin\\|if\\|while\\*\\|while\\|assert\\|axiom\\)\\( \\|$\\)")
+	    ;;(x-types-regexp "{[^}]*}")
 	    (x-types-regexp "{\\([^}]*\\)}")
-	    (x-types2-regexp "([ ]*\\(assert\\|while\\|axiom\\)[ ]*\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
+	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
 	    (x-varname-regexp "(\\([a-zA-Z0-9'_-]*\\) :=")
             (x-comment-regexp ";.*")
             (x-operators-regexp (regexp-opt x-operators))
@@ -20,7 +21,8 @@
 
         `(
 	  (,x-comment-regexp . font-lock-comment-face)
-	  (,x-keywords-regexp . font-lock-keyword-face)
+					;(,x-keywords-regexp . font-lock-keyword-face)
+	  (,x-keywords-regexp (1 font-lock-keyword-face))
           ;;(,x-types-regexp . font-lock-doc-face)
 	  (,x-types-regexp (0 font-lock-doc-face))
 	  (,x-types2-regexp (2 font-lock-doc-face))

@@ -75,6 +75,14 @@
 (define (log-= a b)
   (log-cmp '= (list a b)))
 
+(: log-< (-> A-expr A-expr Log-expr))
+(define (log-< a b)
+  (log-cmp '< (list a b)))
+
+(: log->= (-> A-expr A-expr Log-expr))
+(define (log->= a b)
+  (log-cmp '>= (list a b)))
+
 ; Reify Boolean expressions as logic formulas
 
 (: reify-bool (-> B-expr Log-expr))

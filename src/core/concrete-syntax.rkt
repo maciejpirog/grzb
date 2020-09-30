@@ -204,6 +204,17 @@
              (ouch! s
                "The correct form is \"(while <invariant> <condition> <statement>)\"")]
 
+            [(and (eq? head 'while*) (= (length ss) 5))
+             (combine4 (parse-log (second ss))
+                       (parse-a   (third ss))
+                       (parse-b   (fourth ss))
+                       (parse     (fifth ss))
+                       (λ ([inv : Log-expr] [d : A-expr] [b : B-expr] [c : (Core Pos)])
+                          (return (make (while* inv d b c)))))]
+            [(eq? head 'while*)
+             (ouch! s
+               "The correct form is \"(while* <invariant> <variant> <condition> <statement>)\"")]
+
             [(and (eq? head 'if) (= (length ss) 4))
              (combine3 (parse-b (second ss))
                        (parse   (third ss))

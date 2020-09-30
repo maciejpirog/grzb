@@ -53,14 +53,14 @@
        (set! f (subst x e f))
        null]
 
-      [(while i b d)
+      [(while i b e)
        (let* ([post (make-obligation
                       (core-meta c)
                       'while-postcondition
                       (log-and i (log-not (reify-bool b)))
                       f)]
               [dobs (begin (set! f i)
-                           (go d))]
+                           (go e))]
               [dpre (make-obligation
                       (core-meta c)
                       'while-body-precondition
@@ -68,6 +68,28 @@
                       f)])
          (set! f i)
          (list* post dpre dobs))]
+
+      [(while* i d b e)
+       (let* ([n (gensym 'decr-)]
+              [post (make-obligation
+                      (core-meta c)
+                      'while*-postcondition
+                      (log-and i (log-not (reify-bool b)))
+                      f)]
+              [dobs (begin (set! f (log-and i (log-< d (a-var n))))
+                           (go e))]
+              [dpre (make-obligation
+                      (core-meta c)
+                      'while*-body-precondition
+                      (log-and i (reify-bool b) (log-= d (a-var n)))
+                      f)]
+              [nneg (make-obligation
+                    (core-meta c)
+                    'while*-variant-nonnegative
+                    (log-and i (reify-bool b))
+                    (log->= d (a-const 0)))])
+         (set! f i)
+         (list* post dpre nneg dobs))]
 
       [(if-stm b t e)
        (let* ([old-f f]

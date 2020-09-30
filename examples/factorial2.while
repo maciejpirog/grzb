@@ -8,9 +8,10 @@
   ; the program
   (assert {and (init n) (>= n 0)})
   (res := 1)
-  (while {and (>= n 0)
-              (forall (k z) (impl (FACTORIAL n z) (= (* z res) k)
-	                          (FACTORIAL init-n k)))}
+  (while* {and (>= n 0)
+               (forall (k z) (impl (FACTORIAL n z) (= (* z res) k)
+	                           (FACTORIAL init-n k)))}
+    n
     (> n 0)
     (begin
       (res := (* res n))

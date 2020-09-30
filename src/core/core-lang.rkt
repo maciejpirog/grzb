@@ -27,6 +27,13 @@
    [c   : (Core meta)])
   #:transparent #:type-name While)
 
+(struct (meta) while*
+  ([inv : Log-expr]
+   [dec : A-expr]
+   [b   : B-expr]
+   [c   : (Core meta)])
+  #:transparent #:type-name While*)
+
 (struct (meta) if-stm
   ([b : B-expr]
    [t : (Core meta)]
@@ -44,7 +51,8 @@
 ; Syntax
 
 (define-type (Core-cons meta)
-  (U Skip (Comp meta) Assign (While meta) (If-stm meta) Annot Axiom))
+  (U Skip (Comp meta) Assign (While meta) (While* meta)
+     (If-stm meta) Annot Axiom))
 
 (define-type (Core meta)
   (Pair meta (Core-cons meta)))
@@ -85,8 +93,10 @@
        (append (print-to-list l) (print-to-list r))]
       [(assign x e)
        (list (list x ':= e))]
-      [(while b i c)
-       (list (list 'while b (print-to-list c)))]
+      [(while i b c)
+       (list (list 'while i b (print-to-list c)))]
+      [(while* i d b c)
+       (list (list 'while* i d b (print-to-list c)))]
       [(if-stm b t e)
        (list (list 'if b (print-to-list t) (print-to-list e)))]
       [(annot f)

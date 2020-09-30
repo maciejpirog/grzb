@@ -42,9 +42,12 @@
 
   (define (desc s)
     (match s
-      ['user-defined "Explicit assertion"]
-      ['while-postcondition "Postcondition of while loop"]
-      ['while-body-precondition "Precondition of while loop body"]))
+      ['user-defined               "Explicit assertion"]
+      ['while-postcondition        "Postcondition of while loop"]
+      ['while-body-precondition    "Precondition of while loop body"]
+      ['while*-postcondition       "Postcondition of while* loop"]
+      ['while*-body-precondition   "Precondition of while* loop body"]
+      ['while*-variant-nonnegative "Variant of while* nonnegative"]))
   
   (match ob
     [(proof-obligation m d f)

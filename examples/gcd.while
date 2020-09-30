@@ -8,8 +8,9 @@
   
   ; the program
   (assert {and (init x y) (> x 0) (> y 0)})
-  (while {and (> x 0) (> y 0)
-              (forall (k) (impl (GCD x y k) (GCD init-x init-y k)))}
+  (while*
+    {and (> x 0) (> y 0) (forall (k) (impl (GCD x y k) (GCD init-x init-y k)))}
+    {+ x y}
     (not (= x y))
     (if (> x y)
         (x := (- x y))
