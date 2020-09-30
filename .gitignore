@@ -1,0 +1,14 @@
+/build/
+
+compiled/
+
+*~
+\#*
+.#*
+.DS_Store
+*.bak
+TAGS
+*.swn
+*.swo
+*.swp
+.gdb_history
