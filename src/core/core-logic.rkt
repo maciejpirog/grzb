@@ -173,15 +173,14 @@
 
 ; Pretty printing
 
+(: split-and (-> Log-expr (Listof Log-expr)))
+(define (split-and g)
+  (match g
+    [(log-op 'and xs) (append-map split-and xs)]
+    [h (list h)]))
+
 (: extract-assumptions (-> Log-expr (Pair (Listof Log-expr) Log-expr)))
 (define (extract-assumptions f)
-
-  (: split-and (-> Log-expr (Listof Log-expr)))
-  (define (split-and g)
-    (match g
-      [(log-op 'and xs) (append-map split-and xs)]
-      [h (list h)]))
-
   (match f
     [(log-op 'impl xs)
      (let*-values ([(init last) (split-at-right xs 1)]

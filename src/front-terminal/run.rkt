@@ -54,8 +54,10 @@
      (printf "~a at (~a:~a)~n" (desc d) (pos-line m) (pos-col m))
      (match (extract-assumptions f)
        [(cons xs g)
-        (map (λ ([h : Log-expr]) (printf "* ~a~n" (log-pretty-print h))) xs)
-        (printf "=> ~a~n" (log-pretty-print g))])
+        (map (λ ([h : Log-expr]) (printf "* ~a~n" (log-pretty-print h)))
+             xs)
+        (map (λ ([h : Log-expr]) (printf "=> ~a~n" (log-pretty-print h)))
+             (split-and g))])
      false]))
          
 (: print-obs (-> (Listof (Proof-obligation Pos)) False))
