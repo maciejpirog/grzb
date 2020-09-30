@@ -6,6 +6,10 @@ A While verifier powered by Z3
 
 While programs are written in LISP-y syntax:
 
+![Emacs in grzb mode](https://github.com/maciejpirog/grzb/blob/master/other/screenshot1.png)
+
+In terminal:
+
 ```
 $ cat examples/mult.while                                                  
 (begin
