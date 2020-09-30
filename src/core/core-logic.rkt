@@ -28,7 +28,7 @@
   ([qname : Quantifier-name]
    [vars  : (Listof Symbol)]
    [f     : Log-expr])
-  #:transparent #:type-name Log-forall)
+  #:transparent #:type-name Log-quant)
 
 (struct log-rel
   ([o    : Symbol]
@@ -53,7 +53,7 @@
 (define-predicate quantifier-name? Quantifier-name)
 
 (define-type Log-expr
-  (U Log-const Log-var Log-op Log-cmp Log-forall Log-rel))
+  (U Log-const Log-var Log-op Log-cmp Log-quant Log-rel))
 
 (define-predicate log-expr? Log-expr)
 
