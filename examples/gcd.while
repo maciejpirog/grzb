@@ -13,8 +13,6 @@
     (not (= x y))
     (begin
       (if (> x y)
-        (begin
-          (x := (- x y)))
-        (begin
-	  (y := (- y x))))))
+          (x := (- x y))
+	  (y := (- y x)))))
   (assert {GCD init-x init-y x}))
