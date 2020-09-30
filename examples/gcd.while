@@ -11,8 +11,7 @@
   (while {and (> x 0) (> y 0)
               (forall (k) (impl (GCD x y k) (GCD init-x init-y k)))}
     (not (= x y))
-    (begin
-      (if (> x y)
-          (x := (- x y))
-	  (y := (- y x)))))
+    (if (> x y)
+        (x := (- x y))
+	(y := (- y x))))
   (assert {GCD init-x init-y x}))
