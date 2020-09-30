@@ -1,0 +1,8 @@
+; error in the Integer mode
+; ok in the Real mode
+
+(begin
+  (assert {init x y})
+  (x := 2)
+  (z := 3)
+  (assert {exists (y) (and (< x y z))}))

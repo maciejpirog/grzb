@@ -1,0 +1,9 @@
+; swapping values of two variables without using
+; an auxiliary variable
+
+(begin
+  (assert {init x y})
+  (x := (+ x y))
+  (y := (- x y))
+  (x := (- x y))
+  (assert {and (= x init-y) (= y init-x)}))

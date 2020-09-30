@@ -1,0 +1,11 @@
+; multiplication (* m k) via repeated addition
+
+(begin
+  (assert {init m k})
+  (res := 0)
+  (while {= (* init-m init-k) (+ res (* m k))}
+    (not (= k 0))
+    (begin
+      (res := (+ res m))
+      (k := (- k 1))))
+  (assert {= res (* init-m init-k)}))

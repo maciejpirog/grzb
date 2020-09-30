@@ -1,0 +1,17 @@
+; calculating n! bottom-up, i.e., n! = 1 * 2 * ... * n
+
+(begin
+  ; definition of factorial
+  (axiom {FACTORIAL 0 1})
+  (axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+  
+  ; the program
+  (assert {>= n 0})
+  (res := 1)
+  (i := 0)
+  (while {and (FACTORIAL i res) (>= i 0) (<= i n)}
+    (< i n)
+    (begin
+      (i := (+ i 1))
+      (res := (* res i))))
+  (assert {FACTORIAL n res})))
