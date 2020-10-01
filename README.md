@@ -48,7 +48,7 @@ As the next step, install the Racket bindings for Z3:
 raco pkg install z3
 ```
 
-Now we are ready to compile __grzb__ for the terminal:
+Now we are ready to compile __grzb__:
 
 ```
 cd grzb
