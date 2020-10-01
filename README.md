@@ -89,7 +89,7 @@ B-CMP  ::= = | > | >= | < | <=
 
 where:
 
-`not` requires exactly one argumet.
+`not` requires exactly one argumnet.
 
 `impl` is an implication. In particular, `(impl a b ... c z)` is equivalent to `(impl (and a b ... c) z)`.
 
