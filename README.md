@@ -102,6 +102,7 @@ LOG-EXPR ::= (B-OP LOG-EXPR ...)
           |  (forall (X ...) LOG-EXPR)
           |  (exists (X ...) LOG-EXPR)
           |  (REL A-EXPR ...)
+          |  (init X ...)
 ```
 
 where:
@@ -116,6 +117,8 @@ where:
 ```
 
 As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`) and we use all-caps for names of relations.
+
+`(init x y ... z)` stands for `(and (= x init-x) (= y init-y) ... (= z init-z))`.
 
 ### While
 
