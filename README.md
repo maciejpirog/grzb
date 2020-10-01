@@ -115,7 +115,7 @@ where:
 (axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
 ```
 
-As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`).
+As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`) and we use all-caps for names of relations.
 
 ### While
 
@@ -146,9 +146,29 @@ where:
 
 `(assert f)` is a user asserion which specifies a condition that is met at a given point of the program. Most usually, we want one as the first step of the program (the precondition) and the last step (the postcondition).
 
-`(axiom f)` tells __grzb__ to include `f` as an assumption to every proof obligation. It is used to specify relations, as in the `FACTORIAL` example above. Free variables in every axiom are closed by a universal quantifier, so the following two definitions are equivalnet:
+`(axiom f)` tells __grzb__ to include `f` as an assumption to every proof obligation. It is used to specify relations, as in the `FACTORIAL` example above. Free variables in every axiom are closed by a universal quantifier, so the following two definitions are equivalent:
 
 ```
 (axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
 (axiom {forall (n k) (impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n)))})
+```
+
+Axioms are usually defined asthe first thing in the program, for example:
+
+```
+(begin
+  (axiom {FACTORIAL 0 1})
+  (axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+  
+  (assert {>= n 0})
+  (res := 1)
+  (i := 0)
+  (while*
+    {and (FACTORIAL i res) (>= i 0) (<= i n)}
+    {- n i}
+    (< i n)
+    (begin
+      (i := (+ i 1))
+      (res := (* res i))))
+  (assert {FACTORIAL n res})))
 ```
