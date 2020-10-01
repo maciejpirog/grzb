@@ -60,3 +60,95 @@ We can check if it works:
 ```
 ./grzb examples/factorial.while
 ```
+
+## Reference
+
+### Arithmetic expressions
+
+```
+A-EXPR ::= (A-OP A-EXPR ...)
+        |  n
+A-OP   ::= + | - | * | / | %
+```
+
+where:
+
+Semantics of the operators is as in Racket, where `%` is equivalent to Racket's `mod`.
+
+`n` stands for a constant.
+
+### Boolean expressions
+
+```
+B-EXPR ::= (B-OP B-EXPR ...)
+        |  (B-CMP A-EXPR ...)
+        |  true | false
+B-OP   ::= and | or | not | impl | iff
+B-CMP  ::= = | > | >= | < | <=
+```
+
+where:
+
+`not` requires exactly one argumet.
+
+`impl` is an implication. In particular, `(impl a b ... c z)` is equivalent to `(impl (and a b ... c) z)`.
+
+### Verification logic
+
+```
+LOG-EXPR ::= (B-OP LOG-EXPR ...)
+          |  (B-CMP A-EXPR ...)
+          |  true | false
+          |  (forall (X ...) LOG-EXPR)
+          |  (exists (X ...) LOG-EXPR)
+          |  (REL A-EXPR ...)
+```
+
+where:
+
+`(X ...)` stands for a non-empty list of variables (symbols)
+
+`REL` is a name of a relation. Relations are user-specified (via `axiom` statements), e.g., one can specify (in the style of logic programming) a relation `FACTORIAL` such that `(FACTORIAL n k)` holds if `k` is a factorial of `n`:
+
+```
+(axiom {FACTORIAL 0 1})
+(axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+```
+
+As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`).
+
+### While
+
+```
+CMD ::= (skip)
+     |  (begin CMD ...)
+     |  (X := A-EXPR)
+     |  (if B-EXPR CMD CMD)
+     |  (while LOG-EXPR B-EXPR CMD)
+     |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
+     |  (assert LOG-EXPR)
+     |  (axiom LOG-EXPR)
+```
+
+where:
+
+`(skip)` is a command that does nothing.
+
+`(begin c d ...)` is a sequential compositions of commands `c`, `d`, ...
+
+`(x := e)` assigns the value of the arithmetic expression `e` to the variable `x`.
+
+`(if b c d)` is the obvious "if" command.
+
+`(while i b c)` is the while loop, where `i` is the invariant. It yields partial correctness of the loop.
+
+`(while* i v b c)` is the while loop that yields total correctness. The arithmetic expression `v` is the "variant" of the loop, that is a value which strictly decreases every iteration.
+
+`(assert f)` is a user asserion which specifies a condition that is met at a given point of the program. Most usually, we want one as the first step of the program (the precondition) and the last step (the postcondition).
+
+`(axiom f)` tells __grzb__ to include `f` as an assumption to every proof obligation. It is used to specify relations, as in the `FACTORIAL` example above. Free variables in every axiom are closed by a universal quantifier, so the following two definitions are equivalnet:
+
+```
+(axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+(axiom {forall (n k) (impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n)))})
+```
