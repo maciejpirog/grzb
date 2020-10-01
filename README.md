@@ -153,7 +153,7 @@ where:
 (axiom {forall (n k) (impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n)))})
 ```
 
-Axioms are usually defined asthe first thing in the program, for example:
+Axioms are usually defined as the first thing in the program, for example:
 
 ```
 (begin
