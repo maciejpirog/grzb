@@ -1,0 +1,30 @@
+language: c
+sudo: false
+
+env:
+  global:
+    - RACKET_DIR=~/racket
+  matrix:
+
+before_install:
+  - git clone https://github.com/greghendershott/travis-racket.git
+  - cat travis-racket/install-racket.sh | bash
+  - export PATH="${RACKET_DIR}/bin:${PATH}"
+  - git clone https://github.com/Z3Prover/z3.git z3prover
+  - cd z3prover
+  - python scripts/mk_make.py --prefix=${HOME}/z3prover
+  - cd build
+  - make
+  - make install
+  - cd ../..
+  - export Z3_LIB="${HOME}/z3prover/lib"
+  - raco pkg install z3
+
+install:
+
+before_script:
+
+script:
+  - raco make src/front-terminal/main.rkt
+
+after_script:
