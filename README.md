@@ -2,7 +2,7 @@
 
 A While verifier powered by Z3
 
-[![Build Status](https://api.travis-ci.com/maciejpirog/grzb.png?branch=master)](http://travis-ci.com/maciejpirog/grzb)
+[![Build Status](https://api.travis-ci.org/maciejpirog/grzb.png?branch=master)](http://travis-ci.org/maciejpirog/grzb)
 
 ## Overview
 
