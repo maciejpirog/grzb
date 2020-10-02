@@ -68,6 +68,7 @@ We can check if it works:
 ```
 A-EXPR ::= (A-OP A-EXPR ...)
         |  n
+		|  X
 A-OP   ::= + | - | * | / | %
 ```
 
@@ -76,6 +77,8 @@ where:
 Semantics of the operators is as in Racket, where `%` is equivalent to Racket's `mod`.
 
 `n` stands for a constant.
+
+`X` standas for a variable (which could be any symbol).
 
 ### Boolean expressions
 

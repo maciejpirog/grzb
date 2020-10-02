@@ -4,7 +4,7 @@
 
 (provide (all-defined-out))
 
-; Construcotrs of syntax of the logic used in assertions
+; Constructors of syntax of the logic used in assertions
 
 (struct log-const
   ([val : Boolean])
