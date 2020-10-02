@@ -2,6 +2,8 @@
 
 A While verifier powered by Z3
 
+[![Build Status](https://api.travis-ci.org/maciejpirog/grzb.png?branch=master)](http://travis-ci.org/maciejpirog/grzb)
+
 ## Overview
 
 The __grzb__ verifier implements both partial and total correctness rules of the very basic Hoare logic for While programs. It can run in two modes: assuming that variables store either integers or reals. The generated proof obligations are discharged by Microsoft's [Z3](https://github.com/Z3Prover/z3) SMT solver.
