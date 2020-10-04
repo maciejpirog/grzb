@@ -29,7 +29,17 @@ $ grzb examples/mult.while
 ok
 ```
 
-## Compilation
+## Run using Docker
+
+__grzb__ is available on [Docker Hub](https://hub.docker.com/repository/docker/maciejpirog/grzb/general). Just remember to bind the directory that contains the program you want to verify to the container's `/home` directory:
+
+```
+docker run --rm -t -v ~/projects/grzb/examples:/home maciejpirog/grzb:latest -v factorial.while
+```
+
+Note that `-v factorial.while` are the arguments given to __grzb__, where `factorial.while` is a file stored in the `~/projects/grzb/examples` directory.
+
+## Compile and Run
 
 To compile __grzb__, you need Racket and Z3. For example, the following should do the trick on mac:
 
@@ -63,7 +73,7 @@ We can check if it works:
 ./grzb examples/factorial.while
 ```
 
-## Reference
+## Reference Manual
 
 ### Arithmetic expressions
 
