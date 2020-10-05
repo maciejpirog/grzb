@@ -10,7 +10,7 @@ The __grzb__ verifier implements both partial and total correctness rules of the
 
 While programs are written in LISP-y syntax:
 
-<img alt="Emacs in grzb mode" src="https://github.com/maciejpirog/grzb/blob/master/other/screenshot1.png" width="100%">
+<img alt="Emacs in grzb mode" src="https://github.com/maciejpirog/grzb/blob/master/other/screenshot1.png" width="80%">
 
 In terminal:
 
@@ -39,7 +39,7 @@ docker run --rm -t -v ~/projects/grzb/examples:/home maciejpirog/grzb:latest -v 
 
 Note that `-v factorial.while` are the arguments given to __grzb__, where `factorial.while` is a file stored in the `~/projects/grzb/examples` directory.
 
-You can also download and run the Docker __grzb__ container straight from Emacs. When in the `grzb` mode, simply hit `C-c C-d C-c` (or `C-c C-d C-p` for verbose output).
+:information_source: You can also download and run the Docker __grzb__ image from within Emacs. When in `grzb-mode`, simply hit `C-c C-d C-c` (or `C-c C-d C-p` for verbose output).
 
 ## Compile and Run
 
