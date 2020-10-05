@@ -24,8 +24,8 @@
 					;(,x-keywords-regexp . font-lock-keyword-face)
 	  (,x-keywords-regexp (1 font-lock-keyword-face))
           ;;(,x-types-regexp . font-lock-doc-face)
-	  (,x-types-regexp (0 font-lock-doc-face))
-	  (,x-types2-regexp (2 font-lock-doc-face))
+	  (,x-types-regexp (0 font-lock-string-face))
+	  (,x-types2-regexp (2 font-lock-string-face))
 	  (,x-varname-regexp (1 font-lock-variable-name-face))
           ;;(,x-constants-regexp . font-lock-type-face)
 	  
@@ -42,19 +42,22 @@
 ;(make-local-variable 'var-mode)
 (setq var-mode 'integer)
 
-;;;###autoload
-(define-derived-mode grzb-mode prog-mode "grzb mode"
-  "Major mode for editing While files to be used in grzb"
+(defun grzb-var-mode-integer ()
+  "Set variable mode to `integer'."
+  (interactive)
+  (setq var-mode 'integer))
 
-;; code for syntax highlighting
-(setq font-lock-defaults '((while-font-lock-keywords))))
+(defun grzb-var-mode-real ()
+  "Set variable mode to `real'."
+  (interactive)
+  (setq var-mode 'real))
 
 ;; evaluating buffer
 (defcustom grzb-path-to-bin nil
   "Path to the grzb interpreter's directory"
   :group 'grzb :type 'directory)
 
-(defun grzb-eval-buffer (&optional BUFFER)
+(defun grzb-verify-buffer (&optional BUFFER)
   "Verify the current buffer's file"
   (interactive)
   (save-buffer)
@@ -75,7 +78,7 @@
       (minibuffer-message olddir)
       (cd olddir))))
 
-(defun grzb-verbose-eval-buffer (&optional BUFFER)
+(defun grzb-verbose-verify-buffer (&optional BUFFER)
   "Verify the current buffer's file in the verbose mode"
   (interactive)
   (save-buffer)
@@ -96,58 +99,84 @@
       (minibuffer-message olddir)
       (cd olddir))))
 
-(setq grzb-mode-map (make-sparse-keymap))
-(define-key grzb-mode-map "\C-c\C-c" 'grzb-eval-buffer)
-(define-key grzb-mode-map "\C-c\C-p" 'grzb-verbose-eval-buffer)
-
-;; menus
-(define-key-after
-  global-map
-  [menu-bar mymenu]
-  (cons "grzb" (make-sparse-keymap "grzb mode"))
-  'tools )
-
-;; var mode menu
-
-(defun grzb-var-mode-integer ()
-  "Set variable mode to `integer'."
+(defun grzb-docker-verify-buffer (&optional BUFFER)
+  "Fetch grzb from Docker and Verify the current buffer's file"
   (interactive)
-  (setq var-mode 'integer))
-					;(bubbles))
+  (save-buffer)
+  (let ((grzb-command (concat "docker run --rm -t -v "
+			      (file-name-directory (buffer-file-name BUFFER))
+			      ":/home maciejpirog/grzb:latest"))
+	(file-name
+         (file-name-nondirectory (buffer-file-name BUFFER))))
+    (when (null grzb-command)
+      (error "grzb executable not found! Make sure it is in exec-path or that `grzb-path-to-bin' is set appropriately."))
+    (let ((vmode (if (eq var-mode 'integer) "--mode-integer"
+		   (if (eq var-mode 'real) "--mode-real" "--help"))))
+      (compile (concat grzb-command " " vmode " " file-name) 'grzb-output-mode)
+      )))
 
-(defun grzb-var-mode-real ()
-  "Set variable mode to `real'."
+(defun grzb-docker-verbose-verify-buffer (&optional BUFFER)
+  "Fetch grzb from Docker and Verify the current buffer's file"
   (interactive)
-  (setq var-mode 'real))
-  ;(bubbles))
+  (save-buffer)
+  (let ((grzb-command (concat "docker run --rm -t -v "
+			      (file-name-directory (buffer-file-name BUFFER))
+			      ":/home maciejpirog/grzb:latest"))
+	(file-name
+         (file-name-nondirectory (buffer-file-name BUFFER))))
+    (when (null grzb-command)
+      (error "grzb executable not found! Make sure it is in exec-path or that `grzb-path-to-bin' is set appropriately."))
+    (let ((vmode (if (eq var-mode 'integer) "--mode-integer"
+		   (if (eq var-mode 'real) "--mode-real" "--help"))))
+      (compile (concat grzb-command " -v " vmode " " file-name) 'grzb-output-mode)
+      )))
 
-(define-key global-map
-  [menu-bar mymenu var-mode-real];menu [grzb-set-var-mode-real]
+(defvar grzb-mode-map
+  (let ((map (make-sparse-keymap))
+        (menu-map (make-sparse-keymap)))
+    (define-key map "\C-c\C-c" #'grzb-verify-buffer)
+    (define-key map "\C-c\C-p" #'grzb-verbose-verify-buffer)
+    (define-key map "\C-c\C-d\C-c" #'grzb-docker-verify-buffer)
+    (define-key map "\C-c\C-d\C-p" #'grzb-docker-verbose-verify-buffer)
+    (define-key map [menu-bar grzb-mode] (cons "grzb" menu-map))
+
+    (define-key menu-map [grzbrm]
       (list 'menu-item "Real Mode" 'grzb-var-mode-real
             :button '(:radio . (eq var-mode 'real))))
-(define-key global-map
-  [menu-bar mymenu var-mode-integer] ;menu [grzb-set-var-mode-integer]
+    
+    (define-key menu-map [grzbim]
       (list 'menu-item "Integer Mode" 'grzb-var-mode-integer
             :button '(:radio . (eq var-mode 'integer))))
 
-(define-key
-  global-map
-  [menu-bar mymenu sep]
-  '("--single-line"))
+    (define-key menu-map [grzbs2] '("--single-line"))
 
-;; berify menu
+    (define-key menu-map [grzbdvv]
+      '(menu-item "Show POs and Verify Using Docker Image" grzb-docker-verbose-verify-buffer
+                  :help "Send the file to Grzb for verification and show the proof obligations"))
+    
+    (define-key menu-map [grzbdv]
+      '(menu-item "Verify Using Docker Image" grzb-docker-verify-buffer
+                  :help "Send the file to Grzb for verification"))
 
-;; Creating a menu item, under the menu by the id “[menu-bar mymenu]”
+    (define-key menu-map [grzbs1] '("--single-line"))
 
-(define-key
-  global-map
-  [menu-bar mymenu vver]
-  '("Show Proof Obligations and Verify" . grzb-verbose-eval-buffer))
+    (define-key menu-map [grzbvv]
+      '(menu-item "Show POs and Verify" grzb-verbose-verify-buffer
+                  :help "Send the file to Grzb for verification and show the proof obligations"))
 
-(define-key
-  global-map
-  [menu-bar mymenu ver]
-  '("Verify" . grzb-eval-buffer))
+    (define-key menu-map [grzbv]
+      '(menu-item "Verify" grzb-verify-buffer
+                  :help "Send the file to Grzb for verification"))
+
+    map))
+
+;;;###autoload
+(define-derived-mode grzb-mode prog-mode "grzb mode"
+  "Major mode for editing While files to be used in grzb
+\\{grzb-mode-map}
+"
+;; code for syntax highlighting
+(setq font-lock-defaults '((while-font-lock-keywords))))
 
 ;; 
 
