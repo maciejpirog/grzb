@@ -111,7 +111,13 @@
          (list ob))]
 
       [(axiom f)
-       null]))
+       null]
+
+      [(check f)
+       (list (proof-obligation (core-meta c)
+                               'check
+                               (close f)))]))
+                                
 
   ; Invoke main loop
   (go c))

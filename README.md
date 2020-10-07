@@ -237,3 +237,5 @@ Axioms can be defined before the main statement of the program:
       (res := (* res i))))
   (assert {FACTORIAL n res})))
 ```
+
+```(check f)``` 

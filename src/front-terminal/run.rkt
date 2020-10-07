@@ -4,11 +4,22 @@
 
 (provide run)
 
-(: run (-> Var-mode Boolean Any (U False Void)))
+(define-type Exit-code
+  (U 'file-error 'malformed-program 'logical-error))
+
+(: exit-grzb (-> Exit-code Any))
+(define (exit-grzb c)
+  (exit (match c
+          ['logical-error     1]
+          ['malformed-program 2]
+          ['file-error        3])))
+
+(: run (-> Var-mode Boolean Any Any))
 (define (run var-mode verbose-mode filename)
 
   (define (fnf)
-    (printf "Error: Can't open file ~v~n" filename))
+    (printf "Error: Can't open file ~v~n" filename)
+    (exit-grzb 'file-error))
 
   (: read-syntax* (-> Any Input-Port (Listof (Syntaxof Any))))
   (define (read-syntax* filename in)
@@ -23,16 +34,19 @@
   
   (with-handlers ([exn:fail:filesystem:errno? (λ (x) (fnf))]
                   [exn:fail:read? (λ ([x : exn:fail:read])
-                                     (print-errors (make-read-errors x)))])
+                                     (print-errors (make-read-errors x))
+                                     (exit-grzb 'malformed-program))])
     (if (string? filename)
         (let* ([in (open-input-file (string->path filename))]
                [_  (port-count-lines! in)]
                [ss (read-syntax* filename in)]
                [_  (close-input-port in)])
           (if (null? ss)
-              (printf "Error: Missing program statement in ~v~n" filename)
+              (begin (printf "Error: Missing program statement in ~v~n" filename)
+                     (exit-grzb 'malformed-program))
               (match (parse-program ss)
-                [(errors es) (print-errors es)]
+                [(errors es) (print-errors es)
+                             (exit-grzb 'malformed-program)]
                 [(success ps)
                  (let*-values
                    ([(defs p) (split-at-right ps 1)]
@@ -42,8 +56,10 @@
                     [(r)      (discharge* var-mode obsa)])
                    (if (null? r)
                        (printf "ok~n")
-                       (print-errors r)))])))
-        (printf "Error: Malformed file name~n"))))
+                       (begin (print-errors r)
+                              (exit-grzb 'logical-error))))])))
+        (begin (printf "Error: Malformed file name~n")
+               (exit-grzb 'file-error)))))
 
 (define-type Proof-obligation-pos
   (Proof-obligation Pos))
@@ -60,7 +76,8 @@
       ['while-body-precondition    "Precondition of while loop body"]
       ['while*-postcondition       "Postcondition of while* loop"]
       ['while*-body-precondition   "Precondition of while* loop body"]
-      ['while*-variant-nonnegative "Variant of while* nonnegative"]))
+      ['while*-variant-nonnegative "Variant of while* nonnegative"]
+      ['check                      "Check statement"]))
   
   (match ob
     [(proof-obligation m d f)

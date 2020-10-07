@@ -48,11 +48,15 @@
   ([val : Log-expr])
   #:transparent #:type-name Axiom)
 
+(struct check
+  ([val : Log-expr])
+  #:transparent #:type-name Check)
+
 ; Syntax
 
 (define-type (Core-cons meta)
   (U Skip (Comp meta) Assign (While meta) (While* meta)
-     (If-stm meta) Annot Axiom))
+     (If-stm meta) Annot Axiom Check))
 
 (define-type (Core meta)
   (Pair meta (Core-cons meta)))
@@ -102,5 +106,7 @@
       [(annot f)
        (list (list 'annot f))]
       [(axiom f)
-       (list (list 'axiom f))]))
+       (list (list 'axiom f))]
+      [(check f)
+       (list (list 'check f))]))
   (print-to-list c))

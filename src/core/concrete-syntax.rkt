@@ -280,6 +280,12 @@
             [(eq? head 'axiom)
              (ouch! s "The correct form is \"(axiom <formula>)\"")]
 
+            [(and (eq? head 'check) (= (length ss) 2))
+             (bind (parse-log (second ss)) (λ ([f : Log-expr])
+             (return (make (check f)))))]
+            [(eq? head 'check)
+             (ouch! s "The correct form is \"(check <formula>)\"")]
+
             [(eq? head 'begin)
              (bind (apply combine (map parse (rest ss))) (λ ([xs : (Listof (Core Pos))])
              (return (make-comp xs))))]

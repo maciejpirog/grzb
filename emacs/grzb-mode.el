@@ -10,10 +10,10 @@
 	    
             ;; generate regex string for each category of keywords
 	    ;(x-keywords-regexp (regexp-opt x-keywords 'words))
-	    (x-keywords-regexp "([ ]*\\(begin\\|skip\\|if\\|while\\*\\|while\\|assert\\|axiom\\)\\( \\|$\\|)\\)")
+	    (x-keywords-regexp "([ ]*\\(begin\\|skip\\|if\\|while\\*\\|while\\|assert\\|axiom\\|check\\)\\( \\|$\\|)\\)")
 	    ;;(x-types-regexp "{[^}]*}")
 	    (x-types-regexp "{\\([^}]*\\)}")
-	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
+	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\|check\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
 	    (x-varname-regexp "(\\([a-zA-Z0-9'_-]*\\) :=")
             (x-comment-regexp ";.*")
             (x-operators-regexp (regexp-opt x-operators))
