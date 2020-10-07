@@ -70,7 +70,7 @@
          (list* post dpre dobs))]
 
       [(while* i d b e)
-       (let* ([n (gensym 'decr-)]
+       (let* ([n (gensym 'decr)]
               [post (make-obligation
                       (core-meta c)
                       'while*-postcondition

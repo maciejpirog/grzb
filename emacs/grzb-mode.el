@@ -5,12 +5,12 @@
 (setq while-font-lock-keywords
       (let* (
             ;; define several category of keywords
-            ;(x-keywords '("begin" "if" "while" "while\\*" "assert" "axiom"))
+            ;(x-keywords '("begin" "skip" "if" "while" "while\\*" "assert" "axiom"))
             (x-operators '(":="))
 	    
             ;; generate regex string for each category of keywords
 	    ;(x-keywords-regexp (regexp-opt x-keywords 'words))
-	    (x-keywords-regexp "([ ]*\\(begin\\|if\\|while\\*\\|while\\|assert\\|axiom\\)\\( \\|$\\)")
+	    (x-keywords-regexp "([ ]*\\(begin\\|skip\\|if\\|while\\*\\|while\\|assert\\|axiom\\)\\( \\|$\\|)\\)")
 	    ;;(x-types-regexp "{[^}]*}")
 	    (x-types-regexp "{\\([^}]*\\)}")
 	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")

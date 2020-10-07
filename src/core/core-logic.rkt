@@ -67,9 +67,9 @@
 (define (log-not a)
   (log-op 'not (list a)))
 
-(: log-impl (-> Log-expr Log-expr Log-expr))
-(define (log-impl a b)
-  (log-op 'impl (list a b)))
+(: log-impl (-> Log-expr * Log-expr))
+(define (log-impl . xs)
+  (log-op 'impl xs))
 
 (: log-= (-> A-expr A-expr Log-expr))
 (define (log-= a b)

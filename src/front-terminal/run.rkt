@@ -8,7 +8,18 @@
 (define (run var-mode verbose-mode filename)
 
   (define (fnf)
-    (printf "--- error ---~nCan't open file ~v~n" filename))
+    (printf "Error: Can't open file ~v~n" filename))
+
+  (: read-syntax* (-> Any Input-Port (Listof (Syntaxof Any))))
+  (define (read-syntax* filename in)
+    (let ([s (read-syntax filename in)])
+      (if (eof-object? s) null
+          (cons s (read-syntax* filename in)))))
+
+  (: my-map (All (meta) (-> (-> (Core meta) (Listof Log-expr))
+                            (Listof (Core meta))
+                            (Listof (Listof Log-expr)))))
+  (define (my-map f xs) (map f xs)) ; no idea why type checker needs this :(
   
   (with-handlers ([exn:fail:filesystem:errno? (λ (x) (fnf))]
                   [exn:fail:read? (λ ([x : exn:fail:read])
@@ -16,21 +27,23 @@
     (if (string? filename)
         (let* ([in (open-input-file (string->path filename))]
                [_  (port-count-lines! in)]
-               [s  (read-syntax filename in)]
+               [ss (read-syntax* filename in)]
                [_  (close-input-port in)])
-          (if (eof-object? s)
-              (printf "--- error ---~nCan't read file ~v~n" filename)
-              (match (parse s)
-                [(errors s) (print-errors s)]
-                [(success p)
-                 (let* ([obs  (gen-obligations p)]
-                        [obsa (with-axioms obs (list-axioms p))]
-                        [_    (if verbose-mode (print-obs obsa) false)]
-                        [r   (discharge* var-mode obsa)])
+          (if (null? ss)
+              (printf "Error: Missing program statement in ~v~n" filename)
+              (match (parse-program ss)
+                [(errors es) (print-errors es)]
+                [(success ps)
+                 (let*-values
+                   ([(defs p) (split-at-right ps 1)]
+                    [(obs)    (gen-obligations (car p))]
+                    [(obsa)   (with-axioms obs (append* (my-map list-axioms ps)))]
+                    [(_)      (if verbose-mode (print-obs obsa) false)]
+                    [(r)      (discharge* var-mode obsa)])
                    (if (null? r)
                        (printf "ok~n")
                        (print-errors r)))])))
-        (printf "--- error ---~nMalformed file name~n"))))
+        (printf "Error: Malformed file name~n"))))
 
 (define-type Proof-obligation-pos
   (Proof-obligation Pos))
@@ -88,7 +101,7 @@
                 (print-ob f)
                 false)]
            ['smt-counterexample
-            (printf "Obligation cannot be discharged~n")
+            (printf "Obligation cannot be discharged:~n")
             (if (and (pair? f) (proof-obligation-pos? (car f)) (string? (cdr f)))
                 (begin
                   (print-ob (car f))
@@ -108,4 +121,3 @@
           (pos "" #f #f))
       'parse-error
       (exn-message r)))))
-  

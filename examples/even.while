@@ -1,0 +1,12 @@
+; We define an inductive predicate, so it's nice to help Z3
+; by explicitly stating the induction principle.
+
+(axiom {EVEN 0})
+(axiom {impl (>= n 0) (EVEN n) (EVEN (+ n 2))})
+
+(axiom {induction (x) (or (EVEN x) (EVEN (+ x 1)))})
+
+(begin
+  (assert {>= x 0})
+  (y := (+ x 1))
+  (assert {or (EVEN x) (EVEN y)}))

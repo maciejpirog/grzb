@@ -5,7 +5,7 @@
 (require "core-expr.rkt")
 (require "error.rkt")
 
-(provide (struct-out pos) Pos Parse-monad parse)
+(provide (struct-out pos) Pos Parse-monad parse-program)
 
 ; Position
 
@@ -88,6 +88,13 @@
                  [else
                   (ouch! s "Boolean expression: unknown operator")]))))])))
 
+; The following two are internal to the "parse-log" procedure, but if we put these two
+; inside, the compiler loops forever :(
+(define-type Induction-type
+  (U 'induction 'induction<))
+
+(define-predicate induction-type? Induction-type)
+
 (: parse-log (-> (Syntaxof Any) (Parse-monad Log-expr)))
 (define (parse-log s)
 
@@ -112,6 +119,38 @@
         (return (log-op 'and
           (map (λ ([s : Symbol]) (log-= (a-var s) (a-var (make-init-name s)))) xs)))
         (ouch! s "Not a variable in \"init\"")))
+  
+  (: make-induction (-> Induction-type (Syntaxof Any) (Syntaxof Any) (Parse-monad Log-expr)))
+  (define (make-induction type vars f)
+    (combine2
+      (let ([vars-list (syntax->datum vars)])
+        (if (and (list? vars-list) (pair? vars-list)
+                 (andmap symbol? vars-list) (null? (cdr vars-list)))
+            (return (car vars-list))
+            (ouch! s "Malformed variable list in the \"induction\" macro")))
+      (parse-log f)
+      (λ ([x : Symbol] [fp : Log-expr])
+         (return
+          (match type
+            ['induction
+             (log-impl (subst x (a-const 0) fp)
+                       (log-quant 'forall (list x)
+                                  (log-impl (log->= (a-var x) (a-const 0))
+                                            fp
+                                            (subst x (a-op '+ (list (a-var x) (a-const 1))) fp)))
+                       (log-quant 'forall (list x)
+                                  (log-impl (log->= (a-var x) (a-const 0)) fp)))]
+            ['induction<
+             (let ([y (gensym x)])
+               (log-impl (log-quant 'forall (list x)
+                                    (log-impl (log->= (a-var x) (a-const 0))
+                                              (log-quant 'forall (list y)
+                                                         (log-impl (log->= (a-var y) (a-const 0))
+                                                                   (log-<  (a-var y) (a-var x))
+                                                                   (subst x (a-var y) fp)))
+                                              fp))
+                         (log-quant 'forall (list x)
+                                    (log-impl (log->= (a-var x) (a-const 0)) fp))))])))))
 
   (let ([e (syntax-e s)])
     (cond
@@ -149,6 +188,10 @@
                   (ouch! s "The correct form is \"(exists (x y ... z) <formula>)\"")]
                  [(eq? head 'init)
                   (make-init (map syntax->datum (rest ss)))]
+                 [(and (induction-type? head) (= (length ss) 3))
+                  (make-induction head (second ss) (third ss))]
+                 [(induction-type? head)
+                  (ouch! s "The correct form is \"(induction (x) <formula>)\"")]
                  [(symbol? head)
                   (bind (apply combine (map parse-a (rest ss)))
                         (λ ([xs : (Listof A-expr)]) (return (log-rel head xs))))]
@@ -231,7 +274,7 @@
             [(eq? head 'assert)
              (ouch! s "The correct form is \"(assert <formula>)\"")]
 
-             [(and (eq? head 'axiom) (= (length ss) 2))
+            [(and (eq? head 'axiom) (= (length ss) 2))
              (bind (parse-log (second ss)) (λ ([f : Log-expr])
              (return (make (axiom f)))))]
             [(eq? head 'axiom)
@@ -245,3 +288,30 @@
              (ouch! s "Unrecognized statement \"" (symbol->string head) "\"")]
 
             [else (ouch! s "Ill-formed statement")])))))
+
+(: parse-def (-> (Syntaxof Any) (Parse-monad (Core Pos))))
+(define (parse-def s)
+
+  (: make (-> (Core-cons Pos) (Core Pos)))
+  (define (make c)
+    (make-core (get-pos s) c))
+  
+  (let ([ss (syntax->list s)])
+    (if (not (and (list? ss) (pair? ss)))
+        (ouch! s "Ill-formed definition. Did you forget a \"(\"?")
+        (let* ([head (syntax->datum (first ss))])
+          (cond
+
+            [(and (eq? head 'axiom) (= (length ss) 2))
+             (bind (parse-log (second ss)) (λ ([f : Log-expr])
+             (return (make (axiom f)))))]
+            [(eq? head 'axiom)
+             (ouch! s "The correct form is \"(axiom <formula>)\"")]
+
+            [else (ouch! s "Ill-formed daefinition")])))))
+
+(: parse-program (-> (Listof (Syntaxof Any)) (Parse-monad (Listof (Core Pos)))))
+(define (parse-program xs)
+  (let-values ([(defs s) (split-at-right xs 1)])
+    (apply combine (append (map parse-def defs)
+                           (map parse s)))))

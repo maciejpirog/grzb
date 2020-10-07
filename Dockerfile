@@ -38,5 +38,5 @@ ENTRYPOINT [ "grzb" ]
 # # #
 
 LABEL maintainer="maciej.adam.pirog@gmail.com"
-LABEL version="0.1.0"
+LABEL version="0.1.1"
 LABEL description="A While verifier powered by Z3"

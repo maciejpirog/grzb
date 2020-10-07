@@ -82,7 +82,7 @@ We can check if it works:
 ```
 A-EXPR ::= (A-OP A-EXPR ...)
         |  n
-		|  X
+        |  X
 A-OP   ::= + | - | * | / | %
 ```
 
@@ -120,6 +120,7 @@ LOG-EXPR ::= (B-OP LOG-EXPR ...)
           |  (exists (X ...) LOG-EXPR)
           |  (REL A-EXPR ...)
           |  (init X ...)
+          |  (INDUCTION-SCHEME (X) LOG-EXPR)
 ```
 
 where:
@@ -135,7 +136,51 @@ where:
 
 As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`) and we use all-caps for names of relations.
 
-`(init x y ... z)` stands for `(and (= x init-x) (= y init-y) ... (= z init-z))`.
+### Initialization of variables
+
+`(init x y ... z)` is a macro for `(and (= x init-x) (= y init-y) ... (= z init-z))`. It is useful as the initial assertion.
+
+### Induction schemes
+
+`(INDUCTION-SCHEME (x) f)` is a macro for induction on natural numbers, where `f` stands for a predicate with a free variable `x`. Because nothing in __grzb__ is higher-order, we need to generate a new induction theorem for every predicate separately. There are two predefined recursion schemes:
+
+`(induction (x) (P x))` stands for:
+
+```
+(impl (P 0)
+      (forall (x) (impl (>= x 0) (P x) (P (+ x 1))))
+	  (forall (x) (impl (>= x 0) (P x))))
+```
+
+while
+
+`(induction< (x) (P x))` stands for
+
+```
+(impl (forall (x) (impl (>= x 0)
+                        (forall (y) (impl (>= y 0) (< y x)
+						                  (P y)))
+                        (P x)))
+      (forall (x) (impl (>= x 0) (P x))))
+```
+
+where `y` is a fresh variable.
+
+For example, Z3 is not able to accept the following program without the induction axiom:
+
+```
+(axiom {EVEN 0})
+(axiom {impl (>= n 0) (EVEN n) (EVEN (+ n 2))})
+
+(axiom {induction (x) (or (EVEN x) (EVEN (+ x 1)))})
+
+(begin
+  (assert {>= x 0})
+  (y := (+ x 1))
+  (assert {or (EVEN x) (EVEN y)}))
+```
+
+:heavy_exclamation_mark: Induction axioms are (of course) not sound in the `real` mode.
 
 ### While
 
@@ -173,13 +218,13 @@ where:
 (axiom {forall (n k) (impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n)))})
 ```
 
-Axioms are usually defined as the first thing in the program, for example:
+Axioms can be defined before the main statement of the program:
 
 ```
-(begin
-  (axiom {FACTORIAL 0 1})
-  (axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+(axiom {FACTORIAL 0 1})
+(axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
   
+(begin
   (assert {>= n 0})
   (res := 1)
   (i := 0)

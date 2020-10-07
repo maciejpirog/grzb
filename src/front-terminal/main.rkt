@@ -42,7 +42,7 @@
    input-file))
 
 (if (version-mode)
-    (printf "grzb version 1.0.0~n")
+    (printf "grzb version 0.1.1~n")
     (if file-to-read
         (run (var-mode) (verbose-mode) file-to-read)
         (printf "grzb: expects an <input-file> on the command line~n")))

@@ -1,0 +1,7 @@
+;; Run with -v (or C-c C-p in the Emacs mode) to see the
+;; generated induction theorems.
+
+(axiom {induction (x) (P x)})
+(axiom {induction< (x) (P x)})
+
+(skip)
