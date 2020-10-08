@@ -30,7 +30,7 @@
   (: my-map (All (meta) (-> (-> (Core meta) (Listof Log-expr))
                             (Listof (Core meta))
                             (Listof (Listof Log-expr)))))
-  (define (my-map f xs) (map f xs)) ; no idea why type checker needs this :(
+  (define (my-map f xs) (map f xs)) ; no idea why the type checker needs this :(
   
   (with-handlers ([exn:fail:filesystem:errno? (λ (x) (fnf))]
                   [exn:fail:read? (λ ([x : exn:fail:read])
@@ -77,7 +77,7 @@
       ['while*-postcondition       "Postcondition of while* loop"]
       ['while*-body-precondition   "Precondition of while* loop body"]
       ['while*-variant-nonnegative "Variant of while* nonnegative"]
-      ['check                      "Check statement"]))
+      ['check                      "Explicit check"]))
   
   (match ob
     [(proof-obligation m d f)
