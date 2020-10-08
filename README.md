@@ -149,7 +149,7 @@ As a convention, we write verification logic expressions in curly braces (except
 ```
 (impl (P 0)
       (forall (x) (impl (>= x 0) (P x) (P (+ x 1))))
-	  (forall (x) (impl (>= x 0) (P x))))
+      (forall (x) (impl (>= x 0) (P x))))
 ```
 
 while
@@ -159,7 +159,7 @@ while
 ```
 (impl (forall (x) (impl (>= x 0)
                         (forall (y) (impl (>= y 0) (< y x)
-						                  (P y)))
+                                          (P y)))
                         (P x)))
       (forall (x) (impl (>= x 0) (P x))))
 ```
@@ -238,4 +238,4 @@ Axioms can be defined before the main statement of the program:
   (assert {FACTORIAL n res})))
 ```
 
-```(check f)``` 
+```(check f)``` run Z3 on a goal. As in the case of axioms, the formula ```f``` is closed with a universal quantifier.
