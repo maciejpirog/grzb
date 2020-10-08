@@ -10,7 +10,7 @@ The __grzb__ verifier implements both partial and total correctness rules of the
 
 While programs are written in LISP-y syntax:
 
-<img alt="Emacs in grzb mode" src="https://github.com/maciejpirog/grzb/blob/master/other/screenshot1.png" width="80%">
+<img alt="Emacs in grzb mode" src="https://raw.githubusercontent.com/maciejpirog/grzb/master/other/screenshot1.png" width="90%">
 
 In terminal:
 
