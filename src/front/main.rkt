@@ -2,7 +2,7 @@
 
 (require racket/cmdline)
 
-(require "../core/solver.rkt")
+(require "../logic/solver.rkt")
 (require "run.rkt")
 
 (: verbose-mode (Parameter Boolean))
