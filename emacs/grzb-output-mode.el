@@ -1,7 +1,7 @@
 (setq grzb-output-font-lock-keywords
       (let* (
-            (x-headers '("--- proof obligation ---" " grzb "))
-            (x-errors '("--- error ---"))
+	    (x-headers '("--- proof obligation ---" " grzb "))
+	    (x-errors '("--- error ---" "Error: "))
             (x-keywords-regexp "^ok$")
             (x-headers-regexp (regexp-opt x-headers))
 	    (x-errors-regexp (regexp-opt x-errors))
