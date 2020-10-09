@@ -74,7 +74,7 @@ install:
 
 # Here supply steps such as raco make, raco test, etc.
 script:
-  - raco make src/front-terminal/main.rkt
+  - raco make src/front/main.rkt
   # - raco test -x .
 
 # OR: If your repo is a Racket package with an info.rkt that has any
