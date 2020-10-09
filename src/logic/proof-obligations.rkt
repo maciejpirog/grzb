@@ -1,8 +1,8 @@
 #lang typed/racket
 
-(require "core-lang.rkt")
-(require "core-logic.rkt")
-(require "core-expr.rkt")
+(require "../core/expr.rkt")
+(require "../core/while.rkt")
+(require "logic-internals.rkt")
 
 (provide (struct-out proof-obligation) Proof-obligation gen-obligations with-axioms)
 
@@ -28,7 +28,6 @@
     [(b-cmp s xs) (log-cmp s xs)]))
 
 ; Generating proof-obligations
-
 (: gen-obligations (All (meta) (-> (Core meta) (Listof (proof-obligation meta)))))
 (define (gen-obligations c)
   
@@ -116,7 +115,7 @@
       [(check f)
        (list (proof-obligation (core-meta c)
                                'check
-                               (close f)))]))
+                               (from-axiom f)))]))
                                 
 
   ; Invoke main loop

@@ -1,7 +1,7 @@
 #lang typed/racket
 
-(require "core-expr.rkt")
-(require "core-logic.rkt")
+(require "expr.rkt")
+(require "../logic.rkt")
 
 (provide (all-defined-out))
 
@@ -80,7 +80,7 @@
 (: list-axioms (All (meta) (-> (Core meta) (Listof Log-expr))))
 (define (list-axioms s)
   (match (core-data s)
-    [(axiom f) (list (close f))]
+    [(axiom f) (list (from-axiom f))]
     [(comp a b) (append (list-axioms a) (list-axioms b))]
     [_ null]))
 

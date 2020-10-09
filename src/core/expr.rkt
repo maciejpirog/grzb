@@ -4,9 +4,18 @@
 
 ; Arithmetic expressions
 
-(struct a-const ([val : Integer])                       #:transparent #:type-name A-const)
-(struct a-var   ([x : Symbol])                          #:transparent #:type-name A-var)
-(struct a-op    ([o : A-oper] [args : (Listof A-expr)]) #:transparent #:type-name A-op)
+(struct a-const
+  ([val : Integer])
+  #:transparent #:type-name A-const)
+
+(struct a-var
+  ([x : Symbol])
+  #:transparent #:type-name A-var)
+
+(struct a-op
+  ([o : A-oper]
+   [args : (Listof A-expr)])
+  #:transparent #:type-name A-op)
 
 (define-type A-oper
   (U '+ '- '/ '* '%))
@@ -20,10 +29,23 @@
 
 ; Boolean expressions
 
-(struct b-const ([val : Boolean])                       #:transparent #:type-name B-const)
-(struct b-var   ([x : Symbol])                          #:transparent #:type-name B-var)
-(struct b-op    ([o : B-oper] [args : (Listof B-expr)]) #:transparent #:type-name B-op)
-(struct b-cmp   ([o : B-cmpr] [args : (Listof A-expr)]) #:transparent #:type-name B-cmp)
+(struct b-const
+  ([val : Boolean])
+  #:transparent #:type-name B-const)
+
+(struct b-var
+  ([x : Symbol])
+  #:transparent #:type-name B-var)
+
+(struct b-op
+  ([o : B-oper]
+   [args : (Listof B-expr)])
+  #:transparent #:type-name B-op)
+
+(struct b-cmp
+  ([o : B-cmpr]
+   [args : (Listof A-expr)])
+  #:transparent #:type-name B-cmp)
 
 (define-type B-oper
   (U 'and 'or 'not))

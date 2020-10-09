@@ -1,11 +1,10 @@
 #lang typed/racket
 
+(require "../core/expr.rkt")
+(require "../core/while.rkt")
+(require "logic-internals.rkt")
 (require "proof-obligations.rkt")
-(require "core-expr.rkt")
-(require "core-logic.rkt")
-(require "core-lang.rkt")
-(require "error.rkt")
-
+(require "../utils/error.rkt")
 (require z3/smt)
 
 (provide Var-mode discharge discharge*)

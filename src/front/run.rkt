@@ -1,6 +1,12 @@
 #lang typed/racket
 
-(require "../core.rkt")
+(require "../utils/error.rkt")
+(require "../utils/parse-utils.rkt")
+(require "../logic.rkt")
+(require "../logic/proof-obligations.rkt")
+(require "../logic/solver.rkt")
+(require "../core/while.rkt")
+(require "../core/parse-prog.rkt")
 
 (provide run)
 
@@ -66,7 +72,7 @@
 
 (define-predicate proof-obligation-pos? Proof-obligation-pos)
 
-(: print-ob (-> (Proof-obligation Pos) False))
+(: print-ob (-> (Proof-obligation Pos) Void))
 (define (print-ob ob)
 
   (define (desc s)
@@ -82,18 +88,12 @@
   (match ob
     [(proof-obligation m d f)
      (printf "~a at (~a:~a)~n" (desc d) (pos-line m) (pos-col m))
-     (match (extract-assumptions f)
-       [(cons xs g)
-        (map (λ ([h : Log-expr]) (printf "* ~a~n" (log-pretty-print h)))
-             xs)
-        (map (λ ([h : Log-expr]) (printf "=> ~a~n" (log-pretty-print h)))
-             (split-and g))])
-     false]))
+     (print-formula f)]))
          
-(: print-obs (-> (Listof (Proof-obligation Pos)) False))
+(: print-obs (-> (Listof (Proof-obligation Pos)) Void))
 (define (print-obs obs)
   (if (null? obs)
-      false
+      (void)
       (match (first obs)
         [(proof-obligation m d f)
          (printf "--- proof obligation ---~n")
@@ -101,7 +101,7 @@
          (printf "~n")
          (print-obs (rest obs))])))
 
-(: print-errors (-> (Listof (User-error Pos)) (U False Void)))
+(: print-errors (-> (Listof (User-error Pos)) Void))
 (define (print-errors xs)
   (if (null? xs)
       (printf "")

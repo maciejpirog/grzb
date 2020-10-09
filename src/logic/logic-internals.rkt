@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(require "core-expr.rkt")
+(require "../core/expr.rkt")
 
 (provide (all-defined-out))
 
@@ -123,8 +123,8 @@
     [(log-quant n vs f) (log-rels f)]
     [(log-rel o xs)     (list (cons o (length xs)))]))
 
-(: close (-> Log-expr Log-expr))
-(define (close f)
+(: from-axiom (-> Log-expr Log-expr))
+(define (from-axiom f)
   (let ([fv (log-free-vars f)])
     (if (null? fv) f
         (log-quant 'forall fv f))))
@@ -188,6 +188,16 @@
        (cons (append (append-map split-and init) (car lextr))
              (cdr lextr)))]
     [f (cons null f)]))
+
+(: print-formula (-> Log-expr Void))
+(define (print-formula f)
+  (match (extract-assumptions f)
+    [(cons xs g)
+     (map (λ ([h : Log-expr]) (printf "* ~a~n" (log-pretty-print h)))
+          xs)
+     (map (λ ([h : Log-expr]) (printf "=> ~a~n" (log-pretty-print h)))
+          (split-and g))])
+  (void))
 
 (: log-pretty-print (-> Log-expr Any))
 (define (log-pretty-print e)

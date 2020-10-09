@@ -66,7 +66,7 @@ Now we are ready to compile __grzb__:
 
 ```
 cd grzb
-raco exe -o grzb src/front-terminal/main.rkt
+raco exe -o grzb src/front/main.rkt
 ```
 
 We can check if it works:
