@@ -15,7 +15,7 @@ RUN raco pkg install --no-docs --deps search-auto z3
 
 WORKDIR /home
 RUN git clone https://github.com/maciejpirog/grzb.git grzb-devel
-RUN raco exe -o grzb grzb-devel/src/front-terminal/main.rkt
+RUN raco exe -o grzb grzb-devel/src/front/main.rkt
 
 # # #
 
