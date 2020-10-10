@@ -12,7 +12,7 @@
   ([meta : meta] [desc : Symbol] [f : Log-expr])
   #:transparent #:type-name Proof-obligation)
 
-(: make-obligation (All (meta) (-> meta Symbol Log-expr Log-expr (proof-obligation meta))))
+(: make-obligation (All (meta) (-> meta PO-type Log-expr Log-expr (proof-obligation meta))))
 (define (make-obligation meta desc from to)
   (proof-obligation meta desc
     (log-impl from to)))
@@ -27,99 +27,102 @@
     [(b-op s xs)  (log-op s (map reify-bool xs))]
     [(b-cmp s xs) (log-cmp s xs)]))
 
-; Generating proof-obligations
-(: gen-obligations (All (meta) (-> (Core meta) (Listof (proof-obligation meta)))))
-(define (gen-obligations c)
-  
-  ; Last postcondition
-  (: f Log-expr)
-  (define f (log-const true))
+; Types of proof obligations
+
+(define-type PO-type
+  (U 'check 'user-defined 'while-postcondition 'while-body-precondition
+     'while*-postcondition 'while*-body-precondition 'while*-variant-nonnegative))
+     
+
+; Calculate the weakest precondition together with proof obligations
+
+(: weakest-precondition (All (meta) (-> (Core meta) Log-expr
+                                        (Pair Log-expr
+                                              (Listof (Proof-obligation meta))))))
+(define (weakest-precondition c postcondition)
+
+  ; Accumulator for proof obligations
+  (: obs (Listof (Proof-obligation meta)))
+  (define obs null)
+
+  (: add! (-> (Proof-obligation meta) Void))
+  (define (add! ob)
+    (set! obs (cons ob obs)))
 
   ; Main loop
-  (: go (All (meta) (-> (Core meta) (Listof (proof-obligation meta)))))
-  (define (go c)
+  (: wp (-> (Core meta) Log-expr Log-expr))
+  (define (wp c f)
     (match (core-data c)
 
-      [(skip)
-       null]
+      [(skip)       f]
 
-      [(comp l r)
-       (let* ([robs (go r)]
-              [lobs (go l)])
-         (append lobs robs))]
+      [(comp l r)   (wp l (wp r f))]
 
-      [(assign x e)
-       (set! f (subst x e f))
-       null]
+      [(assign x e) (subst x e f)]
 
-      [(while i b e)
-       (let* ([post (make-obligation
-                      (core-meta c)
-                      'while-postcondition
-                      (log-and i (log-not (reify-bool b)))
-                      f)]
-              [dobs (begin (set! f i)
-                           (go e))]
-              [dpre (make-obligation
-                      (core-meta c)
-                      'while-body-precondition
-                      (log-and i (reify-bool b))
-                      f)])
-         (set! f i)
-         (list* post dpre dobs))]
+      [(while i b d)
+       (add! (make-obligation
+              (core-meta c)
+              'while-postcondition
+              (log-and i (log-not (reify-bool b)))
+              f))
+       (add! (make-obligation
+              (core-meta c)
+              'while-body-precondition
+              (log-and i (reify-bool b))
+              (wp d i)))
+       i]
 
-      [(while* i d b e)
-       (let* ([n (gensym 'decr)]
-              [post (make-obligation
-                      (core-meta c)
-                      'while*-postcondition
-                      (log-and i (log-not (reify-bool b)))
-                      f)]
-              [dobs (begin (set! f (log-and i (log-< d (a-var n))))
-                           (go e))]
-              [dpre (make-obligation
-                      (core-meta c)
-                      'while*-body-precondition
-                      (log-and i (reify-bool b) (log-= d (a-var n)))
-                      f)]
-              [nneg (make-obligation
-                    (core-meta c)
-                    'while*-variant-nonnegative
-                    (log-and i (reify-bool b))
-                    (log->= d (a-const 0)))])
-         (set! f i)
-         (list* post dpre nneg dobs))]
+      [(while* i v b d)
+       (add! (make-obligation
+              (core-meta c)
+              'while*-postcondition
+              (log-and i (log-not (reify-bool b)))
+              f))
+       (add! (let ([decr (a-var (gensym 'decr))])
+               (make-obligation
+                (core-meta c)
+                'while*-body-precondition
+                (log-and i (reify-bool b) (log-= v decr))
+                (wp d (log-and i          (log-< v decr))))))
+       (add! (make-obligation
+               (core-meta c)
+               'while*-variant-nonnegative
+               (log-and i (reify-bool b))
+               (log->= v (a-const 0))))
+       i]
 
       [(if-stm b t e)
-       (let* ([old-f f]
-              [tobs  (go t)]
-              [t-f   f]
-              [fobs  (begin (set! f old-f)
-                            (go e))])
-         (set! f (log-and (log-impl (reify-bool b) t-f)
-                          (log-impl (log-not (reify-bool b)) f)))
-         (append tobs fobs))]
+       (log-and (log-impl          (reify-bool b)  (wp t f))
+                (log-impl (log-not (reify-bool b)) (wp e f)))]
 
       [(annot g)
-       (let ([ob (make-obligation
-                   (core-meta c)
-                   'user-defined
-                   g
-                   f)])
-         (set! f g)
-         (list ob))]
+       (add! (make-obligation
+              (core-meta c)
+              'user-defined
+              g
+              f))
+       g]
 
-      [(axiom f)
-       null]
+      [(axiom _) f]
 
-      [(check f)
-       (list (proof-obligation (core-meta c)
-                               'check
-                               (from-axiom f)))]))
-                                
+      [(check g)
+       (add! (make-obligation
+              (core-meta c)
+              'check
+              (log-const #t)
+              (from-axiom g)))
+       f]))
 
-  ; Invoke main loop
-  (go c))
+  ; body of weakest-precondition
+  (let ([res (wp c postcondition)])
+    (cons res obs)))
+
+; Generating proof-obligations
+
+(: gen-obligations (All (meta) (-> (Core meta) (Listof (Proof-obligation meta)))))
+(define (gen-obligations c)
+  (cdr (weakest-precondition c (log-const #t))))
 
 ; Adding axioms to obligations
 
@@ -134,13 +137,3 @@
                (let ([new-f (log-op 'impl (append axs (list f)))])
                  (proof-obligation m d new-f))]))
          obs)))
-
-; Test
-
-(: po-pretty-print (All (meta) (-> (Proof-obligation meta) Any)))
-(define (po-pretty-print po)
-  (log-pretty-print (proof-obligation-f po)))
-
-(: pos-pretty-print (All (meta) (-> (Listof (Proof-obligation meta)) (Listof Any))))
-(define (pos-pretty-print pos)
-  (map (lambda ([x : (Proof-obligation meta)]) (po-pretty-print x)) pos))

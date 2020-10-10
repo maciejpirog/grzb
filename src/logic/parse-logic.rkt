@@ -8,9 +8,6 @@
 
 (provide parse-log)
 
-; The following two are internal to the "parse-log" procedure, but if we put these two
-; inside, the compiler (v7.7) seemingly loops forever :(
-
 (define-type Induction-type
   (U 'induction 'induction<))
 
