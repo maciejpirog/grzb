@@ -1,0 +1,15 @@
+;; Run with -v (or C-c C-p in the Emacs mode) to see the
+;; generated induction theorems.
+
+;;(axiom {induction (x) (P x)})
+;;(axiom {induction< (x) (P x)})
+
+(define (factorial n)
+  {>= n 0}
+  (if (> 0 n)
+      (* n (factorial (- n 1)))
+      1)
+  {(FACTORIAL n result)})
+  
+
+(check {or (<= x 0) (> x 0))})

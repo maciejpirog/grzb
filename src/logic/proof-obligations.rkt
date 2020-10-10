@@ -86,10 +86,10 @@
                 (log-and i (reify-bool b) (log-= v decr))
                 (wp d (log-and i          (log-< v decr))))))
        (add! (make-obligation
-               (core-meta c)
-               'while*-variant-nonnegative
-               (log-and i (reify-bool b))
-               (log->= v (a-const 0))))
+              (core-meta c)
+              'while*-variant-nonnegative
+              (log-and i (reify-bool b))
+              (log->= v (a-const 0))))
        i]
 
       [(if-stm b t e)

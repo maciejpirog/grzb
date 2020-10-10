@@ -1,0 +1,18 @@
+; Euclid's algorithm for calculating the GCD of two nats
+
+; axioms regarding GCD
+(axiom {impl (> m 0) (GCD m m m)})
+(axiom {impl (> x 0) (> y 0) (GCD x y k) (GCD y x k)})
+(axiom {impl (> x y 0) (iff (GCD x y k) (GCD (- x y) y k))})
+  
+; the program
+(begin
+  (assert {and (init x y) (> x 0) (> y 0)})
+  (while*
+    {and (> x 0) (> y 0) (forall (k) (impl (GCD x y k) (GCD init-x init-y k)))}
+    {+ x y}
+    (not (= x y))
+    (if (> x y)
+        (x := (- x y))
+	(y := (- y x))))
+  (assert {GCD init-x init-y x}))

@@ -75,7 +75,9 @@ install:
 # Here supply steps such as raco make, raco test, etc.
 script:
   - raco make src/front/main.rkt
-  # - raco test -x .
+  - cd test
+  - sh should-succeed.sh
+  - sh should-fail.sh
 
 # OR: If your repo is a Racket package with an info.rkt that has any
 # `deps`:
