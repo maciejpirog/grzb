@@ -2,13 +2,14 @@ echo "** should succeed tests"
 sum=0
 for file in should-succeed/*.while
 do
-    $file
+    # $file
     .././grzb $file >/dev/null
-    if [ $? -eq 0 ]
+    res=$?
+    if [ $res -eq 0 ]
     then echo "grzb says ok"
     else echo "grzb says error"
     fi
-    sum=$(( $sum + $? ))
+    sum=$(( $sum + $res ))
 done
 if [ $sum -eq 0 ]
 then

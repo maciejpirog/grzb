@@ -74,7 +74,8 @@ install:
 
 # Here supply steps such as raco make, raco test, etc.
 script:
-  - raco make src/front/main.rkt
+  #- raco make src/front/main.rkt
+  - raco exe -o grzb src/front/main.rkt
   - cd test
   - sh should-succeed.sh
   - sh should-fail.sh
