@@ -6,7 +6,11 @@ A While verifier powered by Z3
 
 ## Overview
 
-The __grzb__ verifier implements both partial and total correctness rules of the very basic Hoare logic for While programs. It can run in two modes: assuming that variables store either integers or reals. The generated proof obligations are discharged by Microsoft's [Z3](https://github.com/Z3Prover/z3) SMT solver.
+The __grzb__ verifier implements both partial and total correctness rules of the standard Hoare logic for While programs. It can run in two modes: assuming that variables store either integers or reals. The generated proof obligations are discharged by Microsoft's [Z3](https://github.com/Z3Prover/z3) SMT solver. Interesting features include:
+
+- One-dimensional arrays ([example](examples/array-max.while))
+
+- Induction schemes for natural numbers ([example](examples/even.while))
 
 While programs are written in LISP-y syntax:
 
@@ -83,6 +87,7 @@ We can check if it works:
 A-EXPR ::= (A-OP A-EXPR ...)
         |  n
         |  X
+        |  (X . A-EXPR)
 A-OP   ::= + | - | * | / | %
 ```
 
@@ -93,6 +98,10 @@ Semantics of the operators is as in Racket, where `%` is equivalent to Racket's 
 `n` stands for a constant.
 
 `X` standas for a variable (which could be any symbol).
+
+`(x . e)` stands for the value of `e`-th cell of the array `x`.
+
+Note that while arrays and variables share names, they are distinct. For example, in an expression `(+ a (a . 2))` the first `a` is a __variable__ (which stores a number), while `(a . 2)` is a value of the cell with index `2` of an __array__ `a`, which has nothing to do with the `a` in the first argument of `+`.
 
 ### Boolean expressions
 
@@ -164,8 +173,6 @@ while
       (forall (x) (impl (>= x 0) (P x))))
 ```
 
-where `y` is a fresh variable.
-
 For example, Z3 is not able to accept the following program without the induction axiom:
 
 ```
@@ -188,6 +195,7 @@ For example, Z3 is not able to accept the following program without the inductio
 CMD ::= (skip)
      |  (begin CMD ...)
      |  (X := A-EXPR)
+     |  ((X . A-EXPR) := A-EXPR)
      |  (if B-EXPR CMD CMD)
      |  (while LOG-EXPR B-EXPR CMD)
      |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
@@ -202,6 +210,8 @@ where:
 `(begin c d ...)` is a sequential compositions of commands `c`, `d`, ...
 
 `(x := e)` assigns the value of the arithmetic expression `e` to the variable `x`.
+
+`((x . e) := f)` assigns the value of the arithmetic expression `f` to the `e`-th cell of the array `a`.
 
 `(if b c d)` is the obvious "if" command.
 
