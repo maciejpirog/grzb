@@ -1,0 +1,16 @@
+; If substitution is capture-free, the following program would produce the obligation
+; 
+; (forall (m78) (>= (+ 10 m) m78))
+;
+; which cannot be discharged (counterexample: m -> 0) and grzb fails
+;
+; On the other hand, if substitution is not capture-free, the obligation becomes
+;
+; (forall (m) (>= (+ 10 m) m)
+;
+; and grzb suceeds. So, this test definitely should fail.
+
+(begin
+  (assert true)
+  (n := (+ 10 m))
+  (assert {forall (m) (>= n m)}))

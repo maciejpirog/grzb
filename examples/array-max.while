@@ -1,0 +1,15 @@
+; We're looking for the maximal element in the array a of non-negative
+; elements in the bounds [0 .. b] for some positive b
+
+(begin
+  (assert {forall (j) (impl (<= 0 j b) (< 0 b) (>= (a . j) 0))})
+  (max := 0)
+  (i := 0)
+  (while {forall (j) (impl (<= 0 j (- i 1)) (>= max (a . j)))}
+    (<= i b)
+    (begin
+      (if (> (a . i) max)
+          (max := (a . i))
+	  (skip))
+      (i := (+ i 1))))
+  (assert {forall (j) (impl (<= 0 j b) (>= max (a . j)))}))

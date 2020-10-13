@@ -42,6 +42,18 @@
              (bind (parse-a (third ss)) (λ ([e : A-expr])
              (return (make (assign head e)))))]
 
+            [(and (= (length ss) 3) (eq? (syntax->datum (second ss)) ':=)
+                  (pair? (syntax-e (first ss)))
+                  (syntax? (car (syntax-e (first ss))))
+                  (syntax? (cdr (syntax-e (first ss)))))
+             (let ([x (syntax->datum (car (syntax-e (first ss))))])
+               (if (symbol? x)
+                   (combine2 (parse-a (cdr (syntax-e (first ss))))
+                             (parse-a (third ss))
+                             (λ ([j : A-expr] [e : A-expr])
+                                (return (make (store x j e)))))
+                   (ouch! s "The correct form is \"((x . expr1) := expr2)\"")))]
+
             [(and (eq? head 'while) (= (length ss) 4))
              (combine3 (parse-log (second ss))
                        (parse-b   (third ss))

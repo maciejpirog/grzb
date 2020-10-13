@@ -21,6 +21,11 @@
   (map (λ ([s : Symbol]) (dynamic-declare-const s (var-mode vm)))
        (log-free-vars f)))
 
+(: declare-arrays (-> Var-mode Log-expr (Listof Z3-Ast)))
+(define (declare-arrays vm f)
+  (map (λ ([s : Symbol]) (dynamic-declare-const s (Array/s (var-mode vm) (var-mode vm))))
+       (log-list-arrays f)))
+
 (: declare-rels (-> Var-mode Log-expr (Listof (U Smt-Func Z3-Ast))))
 (define (declare-rels vm f)
   (map (λ ([sa : (Pair Symbol Exact-Nonnegative-Integer)])
@@ -33,17 +38,26 @@
   (: a-oper->s-oper (-> A-oper (-> Smt-Expr Smt-Expr * Smt-Expr)))
   (define (a-oper->s-oper s)
     (match s
-      ['+ +/s] ['- -/s] ['* */s] ['/ //s] ['% mod/s])) 
+      ['+ +/s] ['- -/s] ['* */s] ['/ //s] ['% mod/s]))
+
+  (: make-formula-l (-> Lexpr Smt-Expr))
+  (define (make-formula-l l)
+    (match l
+      [(lexpr-store x i e)
+       (store/s (make-formula-l x) (make-formula-a i) (make-formula-a e))]
+      [x (if (symbol? x) x
+             (error "Impossible: malformed Lexpr"))])) ; Type checker too weak for this :(
 
   (: make-formula-a (-> A-expr Smt-Expr))
   (define (make-formula-a e)
     (match e
-      [(a-const n) n]
-      [(a-var x)   x]
-      [(a-op s xs) (if (pair? xs)
-                       (apply (a-oper->s-oper s)
-                              (map make-formula-a xs))
-                       0)]))
+      [(a-const n)    n]
+      [(a-var x)      x]
+      [(a-select l i) (select/s (make-formula-l l) (make-formula-a i))]
+      [(a-op s xs)    (if (pair? xs)
+                          (apply (a-oper->s-oper s)
+                                 (map make-formula-a xs))
+                          0)]))
 
   (: log-oper->s-oper (-> Log-oper (-> Smt-Expr Smt-Expr * Smt-Expr)))
   (define (log-oper->s-oper s)
@@ -117,6 +131,7 @@
 (define (discharge vm ob)
   (with-new-context
     (declare-vars   vm (proof-obligation-f ob))
+    (declare-arrays vm (proof-obligation-f ob))
     (declare-rels   vm (proof-obligation-f ob))
     (assert-formula vm (log-not (proof-obligation-f ob)))
     (let* ([m (check-sat/model)]

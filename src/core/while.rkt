@@ -18,8 +18,14 @@
 
 (struct assign
   ([x : Symbol]
-   [e : Some-expr])
+   [e : A-expr])
   #:transparent #:type-name Assign)
+
+(struct store
+  ([x : Symbol]
+   [i : A-expr]
+   [e : A-expr])
+  #:transparent #:type-name Store)
 
 (struct (meta) while
   ([inv : Log-expr]
@@ -55,7 +61,7 @@
 ; Syntax
 
 (define-type (Core-cons meta)
-  (U Skip (Comp meta) Assign (While meta) (While* meta)
+  (U Skip (Comp meta) Assign Store (While meta) (While* meta)
      (If-stm meta) Annot Axiom Check))
 
 (define-type (Core meta)
@@ -75,7 +81,7 @@
 (define (core-data c)
   (cdr c))
 
-; Axioms
+; Extract axioms
 
 (: list-axioms (All (meta) (-> (Core meta) (Listof Log-expr))))
 (define (list-axioms s)
@@ -83,30 +89,3 @@
     [(axiom f) (list (from-axiom f))]
     [(comp a b) (append (list-axioms a) (list-axioms b))]
     [_ null]))
-
-; Print to Racket datatypes
-
-(: print-to-racket (All (meta) (-> (Core meta) Any)))
-(define (print-to-racket c)
-  (: print-to-list (All (meta) (-> (Core meta) (Listof Any))))
-  (define (print-to-list c)
-    (match (core-data c)
-      [(skip)
-       null]
-      [(comp l r)
-       (append (print-to-list l) (print-to-list r))]
-      [(assign x e)
-       (list (list x ':= e))]
-      [(while i b c)
-       (list (list 'while i b (print-to-list c)))]
-      [(while* i d b c)
-       (list (list 'while* i d b (print-to-list c)))]
-      [(if-stm b t e)
-       (list (list 'if b (print-to-list t) (print-to-list e)))]
-      [(annot f)
-       (list (list 'annot f))]
-      [(axiom f)
-       (list (list 'axiom f))]
-      [(check f)
-       (list (list 'check f))]))
-  (print-to-list c))

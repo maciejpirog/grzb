@@ -15,6 +15,7 @@
 	    (x-types-regexp "{\\([^}]*\\)}")
 	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\|check\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
 	    (x-varname-regexp "(\\([a-zA-Z0-9'_-]*\\) :=")
+	    (x-varname2-regexp "((\\([a-zA-Z0-9'_-]*\\) . ")
             (x-comment-regexp ";.*")
             (x-operators-regexp (regexp-opt x-operators))
         )
@@ -27,6 +28,7 @@
 	  (,x-types-regexp (0 font-lock-string-face))
 	  (,x-types2-regexp (2 font-lock-string-face))
 	  (,x-varname-regexp (1 font-lock-variable-name-face))
+	  (,x-varname2-regexp (1 font-lock-variable-name-face))
           ;;(,x-constants-regexp . font-lock-type-face)
 	  
           (,x-operators-regexp . font-lock-builtin-face)

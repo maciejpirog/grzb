@@ -5,6 +5,7 @@
 (require "logic-internals.rkt")
 (require "../utils/error.rkt")
 (require "../utils/parse-utils.rkt")
+(require "../utils/assoc.rkt")
 
 (provide parse-log)
 
@@ -16,16 +17,16 @@
 (: parse-log (-> (Syntaxof Any) (Parse-monad Log-expr)))
 (define (parse-log s)
 
-  (: make-quant (-> Quantifier-name (Syntaxof Any) (Syntaxof Any) (Parse-monad Log-expr)))
-  (define (make-quant n vars f)
+  (: parse-quant (-> Quantifier-name (Syntaxof Any) (Syntaxof Any) (Parse-monad Log-expr)))
+  (define (parse-quant name vars f)
     (combine2
       (let ([vars-list (syntax->datum vars)])
         (if (and (list? vars-list) (pair? vars-list) (andmap symbol? vars-list))
             (return vars-list)
-            (ouch! s "Malformed variable list in " (symbol->string n))))
+            (ouch! s "Malformed variable list in " (symbol->string name))))
       (parse-log f)
       (λ ([vs : (Listof Symbol)] [fp : Log-expr])
-         (return (log-quant n vs fp)))))
+         (return (make-quant name vs fp)))))
 
   (: make-init-name (-> Symbol Symbol))
   (define (make-init-name s)
@@ -99,7 +100,7 @@
                   (ouch! s "Expected at least 2 arguments to \""
                            (symbol->string head) "\"")]
                  [(and (quantifier-name? head) (= (length ss) 3))
-                  (make-quant head (second ss) (third ss))]
+                  (parse-quant head (second ss) (third ss))]
                  [(eq? head 'forall)
                   (ouch! s "The correct form is \"(forall (x y ... z) <formula>)\"")]
                  [(eq? head 'exists)

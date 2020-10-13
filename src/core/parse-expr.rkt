@@ -14,6 +14,14 @@
        (return (a-const e))]
       [(symbol? e)
        (return (a-var e))]
+      [(and (pair? e) (not (list? e)) (syntax? (car e)) (syntax? (cdr e)))
+       (let ([x (syntax->datum (car e))])
+         (if (symbol? x)
+             (bind (parse-a (cdr e))
+                   (λ ([i : A-expr]) (return (a-select x i))))
+             (ouch! s "Illegal select expresion. The correct syntax is \"(var . a-expr)\"")))]
+      [(and (pair? e) (not (list? e)))
+       (ouch! s "Illegal select expression. The correct syntax is \"(var . a-expr)\"")]
       [else
        (let ([ss (syntax->list s)])
          (if (not (and (list? ss) (pair? ss)))

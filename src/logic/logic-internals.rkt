@@ -1,6 +1,7 @@
 #lang typed/racket
 
 (require "../core/expr.rkt")
+(require "../utils/assoc.rkt")
 
 (provide (all-defined-out))
 
@@ -93,7 +94,7 @@
     [(b-op s xs)  (log-op s (map reify-bool xs))]
     [(b-cmp s xs) (log-cmp s xs)]))
 
-; Free variables and relations
+; Free variables, arrays, and relations
 
 (: log-free-vars (-> Log-expr (Listof Symbol)))
 (define (log-free-vars e)
@@ -109,7 +110,23 @@
     [(log-quant n vs f) (set-subtract (log-free-vars f) vs)]
     [(log-rel o xs)     (if (pair? xs)
                             (apply set-union (map a-free-vars xs))
-                             null)]))
+                            null)]))
+
+(: log-list-arrays (-> Log-expr (Listof Symbol)))
+(define (log-list-arrays e)
+  (match e
+    [(log-const v)      null]
+    [(log-var x)        (error "log-var")]
+    [(log-op o xs)      (if (pair? xs)
+                            (apply set-union (map log-list-arrays xs))
+                            null)]
+    [(log-cmp o xs)     (if (pair? xs)
+                            (apply set-union (map a-list-arrays xs))
+                            null)]
+    [(log-quant n vs f) (log-list-arrays f)]
+    [(log-rel o xs)     (if (pair? xs)
+                            (apply set-union (map a-list-arrays xs))
+                            null)]))
 
 (: log-rels (-> Log-expr (Listof (Pair Symbol Exact-Nonnegative-Integer))))
 (define (log-rels e)
@@ -123,11 +140,40 @@
     [(log-quant n vs f) (log-rels f)]
     [(log-rel o xs)     (list (cons o (length xs)))]))
 
+; Every time we create a node with a quantifier, we generate fresh variables.
+; It is enough to avoid capture, as gensym guarantees uniqueness and variables
+; bound by a quantifier cannot ever become free again.
+
+(: make-quant (-> Quantifier-name (Listof Symbol) Log-expr Log-expr))
+(define (make-quant name vs fp)
+  (let ([fs (zip-fresh vs)])
+    (log-quant name
+               (map (λ ([p : (Pairof Symbol Symbol)]) (cdr p)) fs)
+               (rename (assoc->fun fs) fp))))
+
 (: from-axiom (-> Log-expr Log-expr))
 (define (from-axiom f)
   (let ([fv (log-free-vars f)])
     (if (null? fv) f
-        (log-quant 'forall fv f))))
+        (make-quant 'forall fv f))))
+
+; Rename quantified variables to avoid capture
+
+(: rename (-> (Symbol -> Symbol) Log-expr Log-expr))
+(define (rename r f)
+  (match f
+    [(log-const v)
+     (log-const v)]
+    [(log-var y)
+     (log-var (r y))]
+    [(log-op o fs)
+     (log-op o (map (lambda ([g : Log-expr]) (rename r g)) fs))]
+    [(log-cmp o as)
+     (log-cmp o (map (lambda ([g : A-expr]) (a-rename r g)) as))]
+    [(log-quant n vs g)
+     (log-quant n vs (rename r g))] ; vs are distinct thanks to gensym
+    [(log-rel o as)
+     (log-rel o (map (lambda ([g : A-expr]) (a-rename r g)) as))]))
 
 ; Substitution
 
@@ -170,6 +216,24 @@
   (if (a-expr? e)
       (subst-a x e f)
       (subst-b x e f)))
+
+; Store substitution
+
+(: subst-store (-> Symbol A-expr A-expr Log-expr Log-expr))
+(define (subst-store x i e f)
+  (match f
+    [(log-const v)
+     (log-const v)]
+    [(log-var y)
+     (log-var y)]
+    [(log-op o fs)
+     (log-op o (map (lambda ([g : Log-expr]) (subst-store x i e g)) fs))]
+    [(log-cmp o fs)
+     (log-cmp o (map (lambda ([g : A-expr]) (a-subst-store x i e g)) fs))]
+    [(log-quant n vs g)
+     (log-quant n vs (subst-store x i e g))]
+    [(log-rel o fs)
+     (log-rel o (map (lambda ([g : A-expr]) (a-subst-store x i e g)) fs))]))
 
 ; Pretty printing
 

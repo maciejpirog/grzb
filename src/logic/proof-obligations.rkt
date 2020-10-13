@@ -54,11 +54,13 @@
   (define (wp c f)
     (match (core-data c)
 
-      [(skip)       f]
+      [(skip)        f]
 
-      [(comp l r)   (wp l (wp r f))]
+      [(comp l r)    (wp l (wp r f))]
 
-      [(assign x e) (subst x e f)]
+      [(assign x e)  (subst x e f)]
+
+      [(store x i e) (subst-store x i e f)]
 
       [(while i b d)
        (add! (make-obligation
