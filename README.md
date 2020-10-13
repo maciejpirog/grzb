@@ -201,6 +201,7 @@ CMD ::= (skip)
      |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
      |  (assert LOG-EXPR)
      |  (axiom LOG-EXPR)
+     |  (check LOG-EXPR)
 ```
 
 where:
