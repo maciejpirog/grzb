@@ -5,7 +5,8 @@
   (assert {forall (j) (impl (<= 0 j b) (< 0 b) (>= (a . j) 0))})
   (max := 0)
   (i := 0)
-  (while {forall (j) (impl (<= 0 j (- i 1)) (>= max (a . j)))}
+  (while* {forall (j) (impl (<= 0 j (- i 1)) (>= max (a . j)))}
+    {- b i}
     (<= i b)
     (begin
       (if (> (a . i) max)

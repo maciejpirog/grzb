@@ -1,9 +1,0 @@
-; maximum of two numbers
-
-(begin
-  (assert {init x y})
-  (if (> x y)
-    (max := x)
-    (max := y))
-  (assert {and (>= max x) (>= max y)}))
-

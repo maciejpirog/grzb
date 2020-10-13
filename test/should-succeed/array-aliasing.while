@@ -1,0 +1,4 @@
+(begin
+  (assert {and (= i j) (= (a . i) 2)})
+  ((a . i) := 5)
+  (assert {= (a . j) 5}))

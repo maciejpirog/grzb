@@ -1,5 +1,0 @@
-; A simple example of doing logic (in Z3)
-
-(begin
-  (assert true)
-  (assert {impl (> a b) (> b c) (> a c)}))

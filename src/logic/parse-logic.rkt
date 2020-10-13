@@ -53,23 +53,23 @@
           (match type
             ['induction
              (log-impl (subst x (a-const 0) fp)
-                       (log-quant 'forall (list x)
-                                  (log-impl (log->= (a-var x) (a-const 0))
-                                            fp
-                                            (subst x (a-op '+ (list (a-var x) (a-const 1))) fp)))
-                       (log-quant 'forall (list x)
-                                  (log-impl (log->= (a-var x) (a-const 0)) fp)))]
+                       (make-quant 'forall (list x)
+                                   (log-impl (log->= (a-var x) (a-const 0))
+                                             fp
+                                             (subst x (a-op '+ (list (a-var x) (a-const 1))) fp)))
+                       (make-quant 'forall (list x)
+                                   (log-impl (log->= (a-var x) (a-const 0)) fp)))]
             ['induction<
              (let ([y (gensym x)])
-               (log-impl (log-quant 'forall (list x)
-                                    (log-impl (log->= (a-var x) (a-const 0))
-                                              (log-quant 'forall (list y)
-                                                         (log-impl (log->= (a-var y) (a-const 0))
-                                                                   (log-<  (a-var y) (a-var x))
-                                                                   (subst x (a-var y) fp)))
-                                              fp))
-                         (log-quant 'forall (list x)
-                                    (log-impl (log->= (a-var x) (a-const 0)) fp))))])))))
+               (log-impl (make-quant 'forall (list x)
+                                     (log-impl (log->= (a-var x) (a-const 0))
+                                               (make-quant 'forall (list y)
+                                                           (log-impl (log->= (a-var y) (a-const 0))
+                                                                     (log-<  (a-var y) (a-var x))
+                                                                     (subst x (a-var y) fp)))
+                                               fp))
+                         (make-quant 'forall (list x)
+                                     (log-impl (log->= (a-var x) (a-const 0)) fp))))])))))
 
   (let ([e (syntax-e s)])
     (cond

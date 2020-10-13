@@ -1,0 +1,7 @@
+; An example from 'Fifty Years of Hoare’s Logic'
+; by Krzysztof R. Apt and Ernst-Rudiger Olderog
+
+(begin
+  (assert {and (= (a . 1) 1) (= (a . 2) 2)})
+  ((a . (a . 2)) := 1)
+  (assert {= (a . (a . 2)) 1}))

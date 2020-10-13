@@ -2,7 +2,11 @@
 
 ## HEAD
 
-- Redesign module structure: now the whole verifier is parametrised by a varification logic with a simple interface (exports from src/logic.rkt, src/logic/proof-obligations.rkt, and src/logic/solver.rkt).
+- Support for arrays implemented by introducing L-expressions in A-exprs (but not exposing them to the user), a la Mike Gordon's notes
+
+- Redesigned module structure: now the whole verifier is parametrised by a verification logic with a simple interface (exports from src/logic.rkt, src/logic/proof-obligations.rkt, and src/logic/solver.rkt)
+
+- Fix an ugly bug in substitution, which is now truly capture-avoiding
 
 ## v0.1.1
 
