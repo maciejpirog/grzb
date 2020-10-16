@@ -1,6 +1,6 @@
 # grzb changelog
 
-## HEAD
+## 0.2.0
 
 - Support for arrays implemented by introducing L-expressions in A-exprs (but not exposing them to the user), a la Mike Gordon's notes
 
@@ -8,7 +8,7 @@
 
 - Fix an ugly bug in substitution, which is now truly capture-avoiding
 
-## v0.1.1
+## 0.1.1
 
 - Exit codes (1 for logical error, 2 for syntax error, 3 for file error)
 
@@ -18,6 +18,6 @@
 
 - Syntax: axioms before the program
 
-## v0.1.0
+## 0.1.0
 
 - Initial version
