@@ -1,8 +1,8 @@
-echo "** should succeed tests"
+echo "** examples"
 sum=0
-for file in should-succeed/*.while
+for file in ../examples/*.while
 do
-    # $file
+    # echo $file
     .././grzb $file >/dev/null
     res=$?
     if [ $res -eq 0 ]
@@ -17,8 +17,8 @@ do
 done
 if [ $sum -eq 0 ]
 then
-    echo "GOOD: should-succeed tests passed"
+    echo "GOOD: examples passed"
     exit 0
 fi
-echo "BAD: at least one should-succeed test failed"
+echo "BAD: at least one example failed"
 exit 1

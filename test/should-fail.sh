@@ -6,7 +6,11 @@ do
     .././grzb $file >/dev/null
     res=$?
     if [ $res -eq 0 ]
-    then echo "grzb says ok"
+    then
+       	echo ""
+        echo "\033[0;31mgrzb says ok:"
+	echo $file
+	echo "\033[0m"
     else echo "grzb says error"
     fi
     sum=$(( $sum * $res ))
