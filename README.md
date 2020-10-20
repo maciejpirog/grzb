@@ -192,6 +192,10 @@ For example, Z3 is not able to accept the following program without the inductio
 ### While
 
 ```
+PROG ::= (axiom LOG-EXPR)
+      |  (check LOG-EXPR)
+      |  CMD
+
 CMD ::= (skip)
      |  (begin CMD ...)
      |  (X := A-EXPR)
@@ -200,8 +204,6 @@ CMD ::= (skip)
      |  (while LOG-EXPR B-EXPR CMD)
      |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
      |  (assert LOG-EXPR)
-     |  (axiom LOG-EXPR)
-     |  (check LOG-EXPR)
 ```
 
 where:
@@ -229,7 +231,7 @@ where:
 (axiom {forall (n k) (impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n)))})
 ```
 
-Axioms can be defined before the main statement of the program:
+Axioms are defined before the main statement of the program:
 
 ```
 (axiom {FACTORIAL 0 1})
@@ -249,4 +251,4 @@ Axioms can be defined before the main statement of the program:
   (assert {FACTORIAL n res})))
 ```
 
-```(check f)``` run Z3 on a goal. As in the case of axioms, the formula ```f``` is closed with a universal quantifier.
+```(check f)``` run Z3 on a goal. As in the case of axioms, the formula ```f``` is always closed by a universal quantifier.
