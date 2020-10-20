@@ -192,8 +192,8 @@ For example, Z3 is not able to accept the following program without the inductio
 ### While
 
 ```
-PROG ::= (axiom LOG-EXPR)
-      |  (check LOG-EXPR)
+PROG ::= (axiom LOG-EXPR) PROG
+      |  (check LOG-EXPR) PROG
       |  CMD
 
 CMD ::= (skip)
