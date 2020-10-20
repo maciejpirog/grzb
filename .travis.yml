@@ -79,6 +79,7 @@ script:
   - cd test
   - sh should-succeed.sh
   - sh should-fail.sh
+  - sh examples.sh
 
 # OR: If your repo is a Racket package with an info.rkt that has any
 # `deps`:
