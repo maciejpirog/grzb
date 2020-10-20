@@ -5,7 +5,20 @@
 
 (provide (all-defined-out))
 
-; Program-syntax
+; Thing that have metadata
+
+(struct (m d) with-meta
+  ([meta : m]
+   [data : d])
+  #:transparent #:type-name With-meta)
+
+(: get-meta (All (m d) (-> (With-meta m d) m)))
+(define get-meta with-meta-meta)
+
+(: get-data (All (m d) (-> (With-meta m d) d)))
+(define get-data with-meta-data)
+
+; Syntax of commands
 
 (struct skip
   ()
@@ -50,42 +63,53 @@
   ([val : Log-expr])
   #:transparent #:type-name Annot)
 
+; Syntax
+
+(define-type (Core-cons meta)
+  (U Skip (Comp meta) Assign Store (While meta) (While* meta)
+     (If-stm meta) Annot))
+
+(define-type (Core meta)
+  (With-meta meta (Core-cons meta)))
+
+(: make-core (All (meta) (-> meta (Core-cons meta) (Core meta))))
+(define (make-core m c)
+  (with-meta m c))
+
+; Programs (axioms, definitions, checks, a command)
+
 (struct axiom
   ([val : Log-expr])
   #:transparent #:type-name Axiom)
 
 (struct check
-  ([val : Log-expr])
+  ([val  : Log-expr])
   #:transparent #:type-name Check)
 
-; Syntax
+(struct (meta) def
+  ()
+  #:transparent #:type-name Def)
 
-(define-type (Core-cons meta)
-  (U Skip (Comp meta) Assign Store (While meta) (While* meta)
-     (If-stm meta) Annot Axiom Check))
+(define-type (Garnish-data meta)
+  (U Axiom Check (Def meta)))
 
-(define-type (Core meta)
-  (Pair meta (Core-cons meta)))
+(define-type (Garnish meta)
+  (With-meta meta (Garnish-data meta)))
 
-(: make-core (All (meta) (-> meta (Core-cons meta) (Core meta))))
-(define (make-core m c)
-  (cons m c))
+(struct (meta) program
+  ([axioms : (Listof (With-meta meta Axiom))]
+   [checks : (Listof (With-meta meta Check))]
+   [defs   : (Listof (With-meta meta (Def meta)))]
+   [cmd    : (Core meta)])
+   #:transparent #:type-name Program)
 
-; Syntax helpers
+(: list-axioms (All (meta) (-> (Program meta) (Listof Log-expr))))
+(define (list-axioms p)
 
-(: core-meta (All (meta) (-> (Core meta) meta)))
-(define (core-meta c)
-  (car c))
+  ; no idea why the type checker needs this :(
+  (: get-data-aux (-> (With-meta meta Axiom) Axiom))
+  (define get-data-aux get-data)
+  
+  (map (compose from-axiom (compose axiom-val get-data-aux)) (program-axioms p)))
 
-(: core-data (All (meta) (-> (Core meta) (Core-cons meta))))
-(define (core-data c)
-  (cdr c))
-
-; Extract axioms
-
-(: list-axioms (All (meta) (-> (Core meta) (Listof Log-expr))))
-(define (list-axioms s)
-  (match (core-data s)
-    [(axiom f) (list (from-axiom f))]
-    [(comp a b) (append (list-axioms a) (list-axioms b))]
-    [_ null]))
+  

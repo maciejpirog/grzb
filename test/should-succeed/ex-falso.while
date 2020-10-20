@@ -1,5 +1,8 @@
+(axiom {> 1 2})
+
+(check {= 5 10})
+
 (begin
-  (axiom {> 1 2})
   (assert {init x})
   (x := 5)
   (assert {= x 10}))

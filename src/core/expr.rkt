@@ -232,7 +232,7 @@
     [(lexpr-store l i e)
      (list 'store (a-pretty-print i) (a-pretty-print e) (lexpr-pretty-print l))]
     [x x]))
-     
+
 (: a-pretty-print (-> A-expr Any))
 (define (a-pretty-print e)
   (match e

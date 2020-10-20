@@ -91,6 +91,28 @@
             [(eq? head 'assert)
              (ouch! s "The correct form is \"(assert <formula>)\"")]
 
+            [(eq? head 'begin)
+             (bind (apply combine (map parse (rest ss))) (λ ([xs : (Listof (Core Pos))])
+             (return (make-comp xs))))]
+
+            [(symbol? head)
+             (ouch! s "Unrecognized statement \"" (symbol->string head) "\"")]
+
+            [else (ouch! s "Ill-formed statement")])))))
+
+(: parse-garnish (-> (Syntaxof Any) (Parse-monad (Garnish Pos))))
+(define (parse-garnish s)
+
+  (: make (-> (Garnish-data Pos) (Garnish Pos)))
+  (define (make c)
+    (with-meta (get-pos s) c))
+
+  (let ([ss (syntax->list s)])
+    (if (not (and (list? ss) (pair? ss)))
+        (ouch! s "Ill-formed statement. Did you forget a \"(\"?")
+        (let* ([head (syntax->datum (first ss))])
+          (cond
+
             [(and (eq? head 'axiom) (= (length ss) 2))
              (bind (parse-log (second ss)) (λ ([f : Log-expr])
              (return (make (axiom f)))))]
@@ -103,39 +125,43 @@
             [(eq? head 'check)
              (ouch! s "The correct form is \"(check <formula>)\"")]
 
-            [(eq? head 'begin)
-             (bind (apply combine (map parse (rest ss))) (λ ([xs : (Listof (Core Pos))])
-             (return (make-comp xs))))]
+            [else (ouch! s "Ill-formed definition")])))))
 
-            [(symbol? head)
-             (ouch! s "Unrecognized statement \"" (symbol->string head) "\"")]
+(: make-program (All (pos) (-> (Listof (Garnish pos)) (Core pos) (Program pos))))
+(define (make-program gs c)
 
-            [else (ouch! s "Ill-formed statement")])))))
-
-(: parse-def (-> (Syntaxof Any) (Parse-monad (Core Pos))))
-(define (parse-def s)
-
-  (: make (-> (Core-cons Pos) (Core Pos)))
-  (define (make c)
-    (make-core (get-pos s) c))
+  ; Type checker looses arguments to type constructors in type predicates for
+  ; generated predicates, so... :(
+  (: filter-axiom (-> (Garnish pos) (Listof (With-meta pos Axiom))))
+  (define (filter-axiom a)
+    (match a
+      [(with-meta m (axiom f)) (list (with-meta (get-meta a) (axiom f)))]
+      [_ null]))
   
-  (let ([ss (syntax->list s)])
-    (if (not (and (list? ss) (pair? ss)))
-        (ouch! s "Ill-formed definition. Did you forget a \"(\"?")
-        (let* ([head (syntax->datum (first ss))])
-          (cond
+  (: filter-check (-> (Garnish pos) (Listof (With-meta pos Check))))
+  (define (filter-check a)
+    (match a
+      [(with-meta m (check f)) (list (with-meta (get-meta a) (check f)))]
+      [_ null]))
+  
+  (: filter-def (-> (Garnish pos) (Listof (With-meta pos (Def pos)))))
+  (define (filter-def a)
+    (match a
+      [(with-meta m (def)) (list (with-meta (get-meta a) (def)))]
+      [_ null]))
+  
+  (program (append-map filter-axiom gs)
+           (append-map filter-check gs)
+           (append-map filter-def   gs)
+           c))
 
-            [(and (eq? head 'axiom) (= (length ss) 2))
-             (bind (parse-log (second ss)) (λ ([f : Log-expr])
-             (return (make (axiom f)))))]
-            [(eq? head 'axiom)
-             (ouch! s "The correct form is \"(axiom <formula>)\"")]
-
-            [else (ouch! s "Ill-formed daefinition")])))))
-
-(: parse-program (-> (Listof (Syntaxof Any)) (Parse-monad (Listof (Core Pos)))))
+(: parse-program (-> (Listof (Syntaxof Any)) (Parse-monad (Program Pos))))
 (define (parse-program xs)
-  (let-values ([(defs s) (split-at-right xs 1)])
-    (apply combine (append (map parse-def defs)
-                           (map parse s)))))
+  (let-values ([(ys y) (split-at-right xs 1)])
+    (if (null? y)
+        (error "Impossible: Empty program in parse-program!")
+        (combine2 (apply combine (map parse-garnish ys))
+                  (parse (car y))
+                  (λ ([gs : (Listof (Garnish Pos))] [c : (Core Pos)])
+                     (return (make-program gs c)))))))
 

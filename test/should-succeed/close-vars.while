@@ -1,0 +1,7 @@
+(axiom {GOOD n})
+
+(check {GOOD k})
+
+(begin
+  (assert true)
+  (assert {GOOD x}))

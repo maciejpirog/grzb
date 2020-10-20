@@ -33,11 +33,6 @@
       (if (eof-object? s) null
           (cons s (read-syntax* filename in)))))
 
-  (: my-map (All (meta) (-> (-> (Core meta) (Listof Log-expr))
-                            (Listof (Core meta))
-                            (Listof (Listof Log-expr)))))
-  (define (my-map f xs) (map f xs)) ; no idea why the type checker needs this :(
-  
   (with-handlers ([exn:fail:filesystem:errno? (λ (x) (fnf))]
                   [exn:fail:read? (λ ([x : exn:fail:read])
                                      (print-errors (make-read-errors x))
@@ -53,11 +48,10 @@
               (match (parse-program ss)
                 [(errors es) (print-errors es)
                              (exit-grzb 'malformed-program)]
-                [(success ps)
+                [(success p)
                  (let*-values
-                   ([(defs p) (split-at-right ps 1)]
-                    [(obs)    (gen-obligations (car p))]
-                    [(obsa)   (with-axioms obs (append* (my-map list-axioms ps)))]
+                   ([(obs)    (gen-obligations (program-checks p) (program-cmd p))]
+                    [(obsa)   (with-axioms obs (list-axioms p))]
                     [(_)      (if verbose-mode (print-obs obsa) false)]
                     [(r)      (discharge* var-mode obsa)])
                    (if (null? r)

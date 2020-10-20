@@ -52,7 +52,7 @@
   ; Main loop
   (: wp (-> (Core meta) Log-expr Log-expr))
   (define (wp c f)
-    (match (core-data c)
+    (match (get-data c)
 
       [(skip)        f]
 
@@ -64,12 +64,12 @@
 
       [(while i b d)
        (add! (make-obligation
-              (core-meta c)
+              (get-meta c)
               'while-postcondition
               (log-and i (log-not (reify-bool b)))
               f))
        (add! (make-obligation
-              (core-meta c)
+              (get-meta c)
               'while-body-precondition
               (log-and i (reify-bool b))
               (wp d i)))
@@ -77,18 +77,18 @@
 
       [(while* i v b d)
        (add! (make-obligation
-              (core-meta c)
+              (get-meta c)
               'while*-postcondition
               (log-and i (log-not (reify-bool b)))
               f))
        (add! (let ([decr (a-var (gensym 'decr))])
                (make-obligation
-                (core-meta c)
+                (get-meta c)
                 'while*-body-precondition
                 (log-and i (reify-bool b) (log-= v decr))
                 (wp d (log-and i          (log-< v decr))))))
        (add! (make-obligation
-              (core-meta c)
+              (get-meta c)
               'while*-variant-nonnegative
               (log-and i (reify-bool b))
               (log->= v (a-const 0))))
@@ -100,31 +100,41 @@
 
       [(annot g)
        (add! (make-obligation
-              (core-meta c)
+              (get-meta c)
               'user-defined
               g
               f))
-       g]
-
-      [(axiom _) f]
-
-      [(check g)
-       (add! (make-obligation
-              (core-meta c)
-              'check
-              (log-const #t)
-              (from-axiom g)))
-       f]))
+       g]))
 
   ; body of weakest-precondition
   (let ([res (wp c postcondition)])
     (cons res obs)))
 
+
+
 ; Generating proof-obligations
 
-(: gen-obligations (All (meta) (-> (Core meta) (Listof (Proof-obligation meta)))))
-(define (gen-obligations c)
-  (cdr (weakest-precondition c (log-const #t))))
+(: gen-obligations (All (meta) (-> (Listof (With-meta meta Check))
+                                   (Core meta)
+                                   (Listof (Proof-obligation meta)))))
+(define (gen-obligations cs c)
+
+  ; Explicit checks (I wanted this to be a separate procedure
+  ; (All (meta) (-> (With-meta meta Check) (Proof-obligation meta)))
+  ; but the type checker complains about map below (why?!) :(
+  (: check->ob (-> (With-meta meta Check) (Proof-obligation meta)))
+  (define (check->ob c)
+    (match (get-data c)
+      [(check g)
+       (make-obligation
+        (get-meta c)
+        'check
+        (log-const #t)
+        (from-axiom g))]))
+  
+  (append
+    (map check->ob cs)
+    (cdr (weakest-precondition c (log-const #t)))))
 
 ; Adding axioms to obligations
 
