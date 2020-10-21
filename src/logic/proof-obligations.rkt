@@ -3,6 +3,7 @@
 (require "../core/expr.rkt")
 (require "../core/while.rkt")
 (require "logic-internals.rkt")
+(require "../utils/assoc.rkt")
 
 (provide (struct-out proof-obligation) Proof-obligation gen-obligations with-axioms)
 
@@ -31,15 +32,17 @@
 
 (define-type PO-type
   (U 'check 'user-defined 'while-postcondition 'while-body-precondition
-     'while*-postcondition 'while*-body-precondition 'while*-variant-nonnegative))
+     'while*-postcondition 'while*-body-precondition 'while*-variant-nonnegative
+     'procedure-precondition))
      
 
 ; Calculate the weakest precondition together with proof obligations
 
-(: weakest-precondition (All (meta) (-> (Core meta) Log-expr
+(: weakest-precondition (All (meta) (-> (Program meta)
+                                        (Core meta) Log-expr
                                         (Pair Log-expr
                                               (Listof (Proof-obligation meta))))))
-(define (weakest-precondition c postcondition)
+(define (weakest-precondition p c postcondition)
 
   ; Accumulator for proof obligations
   (: obs (Listof (Proof-obligation meta)))
@@ -98,6 +101,26 @@
        (log-and (log-impl          (reify-bool b)  (wp t f))
                 (log-impl (log-not (reify-bool b)) (wp e f)))]
 
+      [(proc-call s as)
+       (let*-values (; refresh all variables in the specification
+                     [(targs tpre tpost) (proc-specification p s)]
+                     [(drename) (zip-fresh (set-union targs
+                                                      (log-free-vars tpre)
+                                                      (log-free-vars tpost)))]
+                     [(dargs)   (map (assoc->fun drename) targs)]
+                     [(dpre)    (rename (assoc->fun drename) tpre)]
+                     [(dpost)   (rename (assoc->fun drename) tpost)]
+                     ; compute existentially and universally quantified variables
+                     [(evars)   (set-subtract
+                                  (set-union (log-free-vars dpre) (log-free-vars dpost))
+                                  dargs)]
+                     [(avars)   (remove-duplicates (proc-call-ref-vars as))]
+                     ; substitute actual for formal in specification
+                     [(spre)    (foldr subst-arg dpre  dargs as)]
+                     [(spost)   (foldr subst-arg dpost dargs as)])
+         (make-quant 'exists evars
+            (and spre (log-quant 'forall avars (log-impl spost f)))))]
+
       [(annot g)
        (add! (make-obligation
               (get-meta c)
@@ -110,16 +133,29 @@
   (let ([res (wp c postcondition)])
     (cons res obs)))
 
+; Generating proof obligations for procedures
 
+(: gen-obligations-proc (All (meta) (-> (Program meta)
+                                        (With-meta meta (Def meta))
+                                        (Listof (Proof-obligation meta)))))
+(define (gen-obligations-proc p w)
+  (match (get-data w)
+    [(def n a pre post b)
+     (let ([obs (weakest-precondition p b post)])
+       (cons (make-obligation
+               (get-meta w)
+               'procedure-precondition
+               pre
+               (car obs))
+             (cdr obs)))]))
 
-; Generating proof-obligations
+; Generating proof obligations for entire programs
 
-(: gen-obligations (All (meta) (-> (Listof (With-meta meta Check))
-                                   (Core meta)
+(: gen-obligations (All (meta) (-> (Program meta)
                                    (Listof (Proof-obligation meta)))))
-(define (gen-obligations cs c)
+(define (gen-obligations p)
 
-  ; Explicit checks (I wanted this to be a separate procedure
+  ; Explicit checks. I wanted this to be a separate procedure of type
   ; (All (meta) (-> (With-meta meta Check) (Proof-obligation meta)))
   ; but the type checker complains about map below (why?!) :(
   (: check->ob (-> (With-meta meta Check) (Proof-obligation meta)))
@@ -130,11 +166,13 @@
         (get-meta c)
         'check
         (log-const #t)
-        (from-axiom g))]))
+        (close-universally g))]))
   
   (append
-    (map check->ob cs)
-    (cdr (weakest-precondition c (log-const #t)))))
+    (map check->ob (program-checks p))
+    (append-map (λ ([d : (With-meta meta (Def meta))]) (gen-obligations-proc p d))
+                (program-defs p))
+    (cdr (weakest-precondition p (program-cmd p) (log-const #t)))))
 
 ; Adding axioms to obligations
 

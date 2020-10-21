@@ -2,10 +2,11 @@
 
 (require "expr.rkt")
 (require "../logic.rkt")
+(require "../utils/assoc.rkt")
 
 (provide (all-defined-out))
 
-; Thing that have metadata
+; Things that have metadata
 
 (struct (m d) with-meta
   ([meta : m]
@@ -59,6 +60,11 @@
    [e : (Core meta)])
   #:transparent #:type-name If-stm)
 
+(struct proc-call
+  ([name : Symbol]
+   [args : (Listof Arg-expr)])
+  #:transparent #:type-name Proc-call)
+
 (struct annot
   ([val : Log-expr])
   #:transparent #:type-name Annot)
@@ -67,7 +73,7 @@
 
 (define-type (Core-cons meta)
   (U Skip (Comp meta) Assign Store (While meta) (While* meta)
-     (If-stm meta) Annot))
+     (If-stm meta) Proc-call Annot))
 
 (define-type (Core meta)
   (With-meta meta (Core-cons meta)))
@@ -87,7 +93,11 @@
   #:transparent #:type-name Check)
 
 (struct (meta) def
-  ()
+  ([name : Symbol]
+   [args : (Listof Symbol)]
+   [pre  : Log-expr]
+   [post : Log-expr]
+   [body : (Core meta)])
   #:transparent #:type-name Def)
 
 (define-type (Garnish-data meta)
@@ -103,6 +113,8 @@
    [cmd    : (Core meta)])
    #:transparent #:type-name Program)
 
+; Auxiliary syntax manipulation
+
 (: list-axioms (All (meta) (-> (Program meta) (Listof Log-expr))))
 (define (list-axioms p)
 
@@ -110,6 +122,19 @@
   (: get-data-aux (-> (With-meta meta Axiom) Axiom))
   (define get-data-aux get-data)
   
-  (map (compose from-axiom (compose axiom-val get-data-aux)) (program-axioms p)))
+  (map (compose close-universally (compose axiom-val get-data-aux))
+       (program-axioms p)))
 
+(: proc-specification (All (meta) (-> (Program meta) Symbol
+                                      (Values (Listof Symbol) Log-expr Log-expr))))
+(define (proc-specification p s)
+
+  (: this-one? (-> (With-meta meta (Def meta)) Boolean))
+  (define (this-one? w)
+    (eq? (def-name (get-data w)) s))
   
+  (let ([w (filter this-one? (program-defs p))])
+    (if (null? w)
+        (error "Impossible! Undefined procedure" s)
+        (let ([d (get-data (car w))])
+          (values (def-args d) (def-pre d) (def-post d))))))

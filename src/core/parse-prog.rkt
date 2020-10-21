@@ -9,6 +9,21 @@
 
 (provide parse-program)
 
+; helpers for pasing call convention ("ref" and "val")
+
+(define-type Call-convention
+  (U 'val 'ref))
+
+(define-predicate call-convention? Call-convention)
+
+(: call-convention->arg-expr (-> Call-convention Symbol Arg-expr))
+(define (call-convention->arg-expr cc s)
+  (match cc
+    ['ref (by-ref s)]
+    ['val (a-var s)]))
+
+; parsing
+
 (: parse (-> (Syntaxof Any) (Parse-monad (Core Pos))))
 (define (parse s)
 
@@ -27,6 +42,20 @@
        (make (comp (first xs)
                    (make-comp (rest xs))))]))
 
+  (: parse-arg (-> (Syntaxof Any) (Parse-monad Arg-expr)))
+  (define (parse-arg a)
+    (if (symbol? (syntax-e a))
+        (return (by-ref (syntax-e a))) ; default for variable without annotation
+        (let ([aa (syntax->list a)])
+          (cond
+            [(and (list? aa) (= (length aa) 2))
+             (let ([cc (syntax->datum (first aa))]
+                   [s  (syntax->datum (second aa))])
+               (if (and (call-convention? cc) (symbol? s))
+                   (return (call-convention->arg-expr cc s))
+                   (parse-a a)))]
+            [else (parse-a a)]))))
+
   (let ([ss (syntax->list s)])
     (if (not (and (list? ss) (pair? ss)))
         (ouch! s "Ill-formed statement. Did you forget a \"(\"?")
@@ -40,7 +69,7 @@
 
             [(and (= (length ss) 3) (eq? (syntax->datum (second ss)) ':=) (symbol? head))
              (bind (parse-a (third ss)) (λ ([e : A-expr])
-             (return (make (assign head e)))))]
+                   (return (make (assign head e)))))]
 
             [(and (= (length ss) 3) (eq? (syntax->datum (second ss)) ':=)
                   (pair? (syntax-e (first ss)))
@@ -87,17 +116,18 @@
 
             [(and (eq? head 'assert) (= (length ss) 2))
              (bind (parse-log (second ss)) (λ ([f : Log-expr])
-             (return (make (annot f)))))]
+                   (return (make (annot f)))))]
             [(eq? head 'assert)
              (ouch! s "The correct form is \"(assert <formula>)\"")]
 
             [(eq? head 'begin)
              (bind (apply combine (map parse (rest ss))) (λ ([xs : (Listof (Core Pos))])
-             (return (make-comp xs))))]
+                   (return (make-comp xs))))]
 
             [(symbol? head)
-             (ouch! s "Unrecognized statement \"" (symbol->string head) "\"")]
-
+             (bind (apply combine (map parse-arg (rest ss))) (λ ([xs : (Listof Arg-expr)])
+                   (return (make (proc-call head xs)))))]
+            
             [else (ouch! s "Ill-formed statement")])))))
 
 (: parse-garnish (-> (Syntaxof Any) (Parse-monad (Garnish Pos))))
@@ -125,6 +155,30 @@
             [(eq? head 'check)
              (ouch! s "The correct form is \"(check <formula>)\"")]
 
+            [(and (eq? head 'define) (= (length ss) 5))
+             (let ([raw-pattern (second ss)]
+                   [raw-pre     (third ss)]
+                   [raw-post    (fourth ss)]
+                   [raw-body    (fifth ss)])
+               (combine4
+                 (let ([symb-list (syntax->datum raw-pattern)])
+                   (if (and (list? symb-list) (pair? symb-list) (andmap symbol? symb-list))
+                     (return symb-list)
+                     (ouch! s (string-append "Malformed definition head\n"
+                                             "The correct form is \"(define (name arg ...) "
+                                             "<precondition> <postcondition> <body>\""))))
+                 (parse-log raw-pre)
+                 (parse-log raw-post)
+                 (parse     raw-body)
+                 (λ ([head : (Listof Symbol)] [pre : Log-expr]
+                     [post : Log-expr] [body : (Core Pos)])
+                    (return (make (def (first head)
+                                       (rest head)
+                                       pre post body))))))]
+            [(eq? head 'define)
+             (ouch! s (string-append "The correct form is \"(define (name arg ...) "
+                                     "<precondition> <postcondition> <body>\""))]
+
             [else (ouch! s "Ill-formed definition")])))))
 
 (: make-program (All (pos) (-> (Listof (Garnish pos)) (Core pos) (Program pos))))
@@ -135,19 +189,22 @@
   (: filter-axiom (-> (Garnish pos) (Listof (With-meta pos Axiom))))
   (define (filter-axiom a)
     (match a
-      [(with-meta m (axiom f)) (list (with-meta (get-meta a) (axiom f)))]
+      [(with-meta m (axiom f))
+       (list (with-meta (get-meta a) (axiom f)))]
       [_ null]))
   
   (: filter-check (-> (Garnish pos) (Listof (With-meta pos Check))))
   (define (filter-check a)
     (match a
-      [(with-meta m (check f)) (list (with-meta (get-meta a) (check f)))]
+      [(with-meta m (check f))
+       (list (with-meta (get-meta a) (check f)))]
       [_ null]))
   
   (: filter-def (-> (Garnish pos) (Listof (With-meta pos (Def pos)))))
   (define (filter-def a)
     (match a
-      [(with-meta m (def)) (list (with-meta (get-meta a) (def)))]
+      [(with-meta m (def n as p pp b))
+       (list (with-meta (get-meta a) (def n as p pp b)))]
       [_ null]))
   
   (program (append-map filter-axiom gs)
@@ -164,4 +221,3 @@
                   (parse (car y))
                   (λ ([gs : (Listof (Garnish Pos))] [c : (Core Pos)])
                      (return (make-program gs c)))))))
-

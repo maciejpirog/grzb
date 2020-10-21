@@ -1,0 +1,11 @@
+(define (foo x y z t)
+  true
+  true
+  (begin
+    (z := 0)
+    (z := (+ x z))))
+
+(begin
+  (assert true)
+  (foo p (ref p) (val p) (+ 2 2))
+  (assert true))

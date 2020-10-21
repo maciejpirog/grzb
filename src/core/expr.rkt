@@ -43,6 +43,15 @@
 (define-type Lexpr
   (U Symbol Lexpr-store))
 
+; Arguments to procedure calls
+
+(struct by-ref
+  ([var : Symbol])
+  #:transparent #:type-name By-ref)
+
+(define-type Arg-expr
+  (U A-expr By-ref))
+
 ; Boolean expressions
 
 (struct b-const
@@ -100,6 +109,10 @@
     [(a-op o xs)     (if (pair? xs)
                          (apply set-union (map a-free-vars xs))
                          null)]))
+
+(: proc-call-ref-vars (All (meta) (-> (Listof Arg-expr) (Listof Symbol))))
+(define (proc-call-ref-vars as)
+  (map by-ref-var (filter by-ref? as)))
 
 (: b-free-vars (-> B-expr (Listof Symbol)))
 (define (b-free-vars e)

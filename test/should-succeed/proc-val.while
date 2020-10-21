@@ -1,0 +1,12 @@
+(define (crazy x y)
+  {init x y}
+  {and (= x (+ init-x 10)) (= y (+ init-y 1))}
+  (begin
+    (x := (+ x 10))
+    (y := (+ y 1))))
+
+(begin
+  (assert {init k})
+  (k := 0)
+  (crazy (ref k) (val k))
+  (assert {= k 10}))

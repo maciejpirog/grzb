@@ -146,18 +146,25 @@
 
 (: make-quant (-> Quantifier-name (Listof Symbol) Log-expr Log-expr))
 (define (make-quant name vs fp)
-  (let ([fs (zip-fresh vs)])
-    (log-quant name
-               (map (λ ([p : (Pairof Symbol Symbol)]) (cdr p)) fs)
-               (rename (assoc->fun fs) fp))))
+  (if (null? vs) fp
+    (let ([fs (zip-fresh vs)])
+      (log-quant name
+                 (map (λ ([p : (Pairof Symbol Symbol)]) (cdr p)) fs)
+                 (rename (assoc->fun fs) fp)))))
 
-(: from-axiom (-> Log-expr Log-expr))
-(define (from-axiom f)
+(: close-universally (-> Log-expr Log-expr))
+(define (close-universally f)
   (let ([fv (log-free-vars f)])
     (if (null? fv) f
         (make-quant 'forall fv f))))
 
-; Rename quantified variables to avoid capture
+(: close-existentially (-> Log-expr Log-expr))
+(define (close-existentially f)
+  (let ([fv (log-free-vars f)])
+    (if (null? fv) f
+        (make-quant 'exists fv f))))
+
+; Rename quantified variables to avoid capture and in wp for procedure call
 
 (: rename (-> (Symbol -> Symbol) Log-expr Log-expr))
 (define (rename r f)
@@ -193,6 +200,12 @@
          (log-quant n vs (subst-a x e g)))]
     [(log-rel o as)
      (log-rel o (map (lambda ([g : A-expr]) (a-subst-a x e g)) as))]))
+
+(: subst-arg (-> Symbol Arg-expr Log-expr Log-expr))
+(define (subst-arg x e f)
+  (if (a-expr? e)
+      (subst-a x e f)
+      (subst-a x (a-var (by-ref-var e)) f)))
 
 (: subst-b (-> Symbol B-expr Log-expr Log-expr))
 (define (subst-b x e f)

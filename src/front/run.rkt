@@ -50,7 +50,7 @@
                              (exit-grzb 'malformed-program)]
                 [(success p)
                  (let*-values
-                   ([(obs)    (gen-obligations (program-checks p) (program-cmd p))]
+                   ([(obs)    (gen-obligations p)]
                     [(obsa)   (with-axioms obs (list-axioms p))]
                     [(_)      (if verbose-mode (print-obs obsa) false)]
                     [(r)      (discharge* var-mode obsa)])
@@ -77,6 +77,7 @@
       ['while*-postcondition       "Postcondition of while* loop"]
       ['while*-body-precondition   "Precondition of while* loop body"]
       ['while*-variant-nonnegative "Variant of while* nonnegative"]
+      ['procedure-precondition     "Procedure precondition"]
       ['check                      "Explicit check"]))
   
   (match ob

@@ -1,0 +1,14 @@
+; we chack if no variable capture in proc call occurs
+
+(define (swap x y)
+  {init x y}
+  {and (= x init-y) (= y init-x)}
+  (begin
+    (tmp := x)
+    (x := y)
+    (y := tmp)))
+
+(begin
+  (assert {init y x})
+  (swap y x)
+  (assert {and (= y init-x) (= x init-y)}))
