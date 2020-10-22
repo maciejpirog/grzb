@@ -1,0 +1,35 @@
+(axiom {impl (<= i j) (iff (SORTED 'a i j)
+                           (forall (k m) (impl (<= i k m j) (<= (a . k) (a . m)))))})
+(check true)
+(skip)
+
+#|
+(axiom {impl (<= i j) (iff (LT v 'a i j)
+                           (forall (k) (impl (<= i k j) (< v (a . k)))))})
+
+(axiom {impl (<= i j) (iff (GT v 'a i j)
+                           (forall (k) (impl (<= i k j) (> v (a . k)))))})
+
+(axiom {impl (<= i j) (iff (MEMBER v 'a i j)
+                           (exists (k) (impl (<= i k j) (= (a . k) v))))})
+
+(axiom {impl (<= i j) (iff (NOT-MEMBER v 'a i j)
+                           (forall (k) (impl (<= i k j) (not (= v (a . k))))))})
+
+(check {impl (i <= j)
+             (forall (k) (impl (<= i k j) (> v (a . k))))
+             (forall (k) (impl (<= i k j) (not (= v (a . k)))))
+       })
+
+(define (binary-search v i j res)
+  {SORTED 'a i j}
+  {and (impl (exists (k) (impl (<= i k j)      (= (a . k) v)))  (= res 1))
+       (impl (all    (k) (impl (<= i k j) (not (= (a . k) v)))) (= res 0))}
+  (if (= i j)
+      (if (= (a . i) v)
+          (res := 1)
+	  (res := 0)
+      (if (= (a . (/ (+ i j) 2))
+
+(skip)
+|#

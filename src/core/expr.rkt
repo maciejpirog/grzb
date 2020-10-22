@@ -201,7 +201,7 @@
     [(a-select y i)
      (a-select (lexpr-subst-a x e y) (a-subst-a x e i))]
     [(a-op s es)
-     (a-op s (map (lambda ([f : A-expr]) (a-subst-a x e f)) es))]))
+     (a-op s (map (λ ([f : A-expr]) (a-subst-a x e f)) es))]))
 
 (: b-subst-a (-> Symbol A-expr B-expr B-expr))
 (define (b-subst-a x e ee)
@@ -211,9 +211,9 @@
     [(b-var x)
      (b-var x)]
     [(b-op s es)
-     (b-op s (map (lambda ([f : B-expr]) (b-subst-a x e f)) es))]
+     (b-op s (map (λ ([f : B-expr]) (b-subst-a x e f)) es))]
     [(b-cmp s es)
-     (b-cmp s (map (lambda ([f : A-expr]) (a-subst-a x e f)) es))]))
+     (b-cmp s (map (λ ([f : A-expr]) (a-subst-a x e f)) es))]))
 
 (: b-subst-b (-> Symbol B-expr B-expr B-expr))
 (define (b-subst-b x e ee)
@@ -223,7 +223,7 @@
     [(b-var y)
      (if (eq? x y) e ee)]
     [(b-op s es)
-     (b-op s (map (lambda ([f : B-expr]) (b-subst-b x e f)) es))]
+     (b-op s (map (λ ([f : B-expr]) (b-subst-b x e f)) es))]
     [(b-cmp s es)
      (b-cmp s es)]))
 
@@ -251,7 +251,7 @@
     [(a-select y j)
      (a-select (lexpr-subst-store x i e y) (a-subst-store x i e j))]
     [(a-op s es)
-     (a-op s (map (lambda ([f : A-expr]) (a-subst-store x i e f)) es))]))
+     (a-op s (map (λ ([f : A-expr]) (a-subst-store x i e f)) es))]))
 
 ; Pretty printing
 

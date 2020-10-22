@@ -10,7 +10,7 @@
 
 (define (fib n res)
   {and (>= n 0) (init n)}
-  {and (FIB init-n res)}
+  {FIB init-n res}
   (if (= n 0) (res := 0)
   (if (= n 1) (res := 1)
       (begin
@@ -48,8 +48,8 @@
 ; Let's call our procedures. Note that if we remove the val annotation from
 ; res-rec, the postcondition does not hold, as the specification of
 ; res-rec does not guarantee that it does not change n. But with the val
-; annotation, we're safe! (Otherwie, we could (init n) and then call fib
-; without anny annotation, but formulate the postcondition as
+; annotation, we're safe! (Otherwie, we could add (init n) and then call
+; fib without any annotation, but formulate the postcondition as
 ; (FIB init-n res-rec).)
 
 (begin

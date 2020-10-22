@@ -1,27 +1,27 @@
 # grzb
 
-A While verifier powered by Z3
+A verifier for a simple imperative language powered by Z3
 
 [![Build Status](https://api.travis-ci.org/maciejpirog/grzb.png?branch=master)](http://travis-ci.org/maciejpirog/grzb)
 
 ## Overview
 
-The __grzb__ verifier implements both partial and total correctness rules of the standard Hoare logic for While programs. It can run in two modes: assuming that variables store either integers or reals. The generated proof obligations are discharged by Microsoft's [Z3](https://github.com/Z3Prover/z3) SMT solver. Interesting features include:
+The __grzb__ verifier implements both partial and total correctness rules of the standard Hoare logic. It can run in two modes: assuming that variables store either integers or reals. The generated proof obligations are discharged by Microsoft's [Z3](https://github.com/Z3Prover/z3) SMT solver. Features include:
 
-- Recursive procedures with arguments passed by value or reference ([example](examples/fib.while))
+- Recursive procedures with arguments passed by value or reference ([example](examples/fib.imp))
 
-- One-dimensional arrays ([example](examples/array-max.while))
+- One-dimensional arrays ([example](examples/array-max.imp))
 
-- Induction schemes for natural numbers ([example](examples/even.while))
+- Induction schemes for natural numbers ([example](examples/even.imp))
 
-While programs are written in LISP-y syntax:
+The programs are written in LISP-y syntax:
 
 <img alt="Emacs in grzb mode" src="https://raw.githubusercontent.com/maciejpirog/grzb/master/other/screenshot1.png" width="90%">
 
 In terminal:
 
 ```
-$ cat examples/mult.while                                                  
+$ cat examples/mult.imp                                                  
 (begin
   (assert {init m k})
   (res := 0)
@@ -31,7 +31,7 @@ $ cat examples/mult.while
       (res := (+ res m))
       (k := (- k 1))))
   (assert {= res (* init-m init-k)}))
-$ grzb examples/mult.while
+$ grzb examples/mult.imp
 ok
 ```
 
@@ -40,10 +40,10 @@ ok
 __grzb__ is available on [Docker Hub](https://hub.docker.com/repository/docker/maciejpirog/grzb/general). Just remember to bind the directory that contains the program you want to verify to the container's `/home` directory:
 
 ```
-docker run --rm -t -v ~/projects/grzb/examples:/home maciejpirog/grzb:latest -v factorial.while
+docker run --rm -t -v ~/projects/grzb/examples:/home maciejpirog/grzb:latest -v factorial.imp
 ```
 
-Note that `-v factorial.while` are the arguments given to __grzb__, where `factorial.while` is a file stored in the `~/projects/grzb/examples` directory.
+Note that `-v factorial.imp` are the arguments given to __grzb__, where `factorial.imp` is a file stored in the `~/projects/grzb/examples` directory.
 
 :information_source: You can also download and run the Docker __grzb__ image from within Emacs. When in `grzb-mode`, simply hit `C-c C-d C-c` (or `C-c C-d C-p` for verbose output).
 
@@ -78,7 +78,7 @@ raco exe -o grzb src/front/main.rkt
 We can check if it works:
 
 ```
-./grzb examples/factorial.while
+./grzb examples/factorial.imp
 ```
 
 ## Reference Manual
@@ -152,7 +152,7 @@ Note that arrays are not first-class in the program, they can be referenced as a
 ```
 (axiom {impl (<= i j) (iff (SORTED 'a i j)
                            (forall (k m) (impl (<= i k m j) 
-						                 (<= (a . k) (a . m)))))})
+                                         (<= (a . k) (a . m)))))})
 ```
 
 Since free variables in axioms are closed by universal quantifiers,
@@ -163,7 +163,7 @@ the above is synonymous to:
 (axiom (forall-array (a) (forall (j i)
   (impl (<= i j) (iff (SORTED 'a i j)
                       (forall (k m) (impl (<= i k m j)
-					                (<= (a . k) (a . m))))))))
+                                    (<= (a . k) (a . m))))))))
 ```
 
 ### Initialization of variables
@@ -210,7 +210,7 @@ For example, Z3 is not able to accept the following program without the inductio
 
 :heavy_exclamation_mark: Induction axioms are (of course) not sound in the `real` mode.
 
-### While
+### The IMP language
 
 ```
 PROG ::= (axiom LOG-EXPR) PROG

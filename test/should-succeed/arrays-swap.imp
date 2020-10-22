@@ -1,0 +1,9 @@
+(begin
+  (assert {and (= (x . 0) init-x0)
+               (= (x . 1) init-x1)
+               (= (x . 2) init-x2)})
+  ((x . 2) := (x . 0))
+  ((x . 0) := (x . 1))
+  ((x . 1) := (x . 2))
+  (assert {and (= (x . 0) init-x1)
+               (= (x . 1) init-x0)}))

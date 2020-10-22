@@ -1,0 +1,19 @@
+; definition of factorial
+(axiom {FACTORIAL 0 1})
+(axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+
+; recursive definition of factorial
+(define (factorial n res)
+  {>= n 0}
+  {FACTORIAL n res}
+  (if (= n 0)
+      (res := 1)
+      (begin
+        (factorial (- n 1) rec-res)
+	(res := (* n rec-res)))))
+
+; the program
+(begin
+  (assert {and (init res) (>= n 0)})
+  (factorial n res)
+  (assert {FACTORIAL n res}))

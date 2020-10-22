@@ -270,14 +270,14 @@
     [(log-var y)
      (log-var y)]
     [(log-op o fs)
-     (log-op o (map (lambda ([g : Log-expr]) (subst-a x e g)) fs))]
+     (log-op o (map (λ ([g : Log-expr]) (subst-a x e g)) fs))]
     [(log-cmp o as)
-     (log-cmp o (map (lambda ([g : A-expr]) (a-subst-a x e g)) as))]
+     (log-cmp o (map (λ ([g : A-expr]) (a-subst-a x e g)) as))]
     [(log-quant n vs g)
      (if (member x vs) f
          (log-quant n vs (subst-a x e g)))]
     [(log-rel o as)
-     (log-rel o (map (lambda ([g : Log-rel-arg]) (log-rel-arg-subst-a x e g)) as))]))
+     (log-rel o (map (λ([g : Log-rel-arg]) (log-rel-arg-subst-a x e g)) as))]))
 
 (: subst-arg (-> Symbol Arg-expr Log-expr Log-expr))
 (define (subst-arg x e f)
@@ -293,7 +293,7 @@
     [(log-var y)
      (if (eq? x y) (reify-bool e) f)]
     [(log-op o fs)
-     (log-op o (map (lambda ([g : Log-expr]) (subst-b x e g)) fs))]
+     (log-op o (map (λ ([g : Log-expr]) (subst-b x e g)) fs))]
     [(log-cmp o fs)
      (log-cmp o fs)]
     [(log-quant n vs g)

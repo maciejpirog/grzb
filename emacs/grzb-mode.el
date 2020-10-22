@@ -16,7 +16,7 @@
 	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\|check\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
 	    (x-varname-regexp "(\\([a-zA-Z0-9'_-]*\\) :=")
 	    (x-varname2-regexp "((\\([a-zA-Z0-9'_-]*\\) . ")
-	    (x-funcall-regexp "(\\([A-za-z0-9!@#$%^&*<>'=+-]+\\)")
+	    (x-fundef-regexp "(define[ ]+(\\([A-za-z0-9!@#$%^&*<>'=+-]+\\)")
 	    (x-funcall-convention-regexp "([ ]*\\(ref \\|val \\)")
             (x-comment-regexp ";.*")
             (x-operators-regexp (regexp-opt x-operators))
@@ -32,7 +32,7 @@
 	  (,x-varname-regexp (1 font-lock-variable-name-face))
 	  (,x-varname2-regexp (1 font-lock-variable-name-face))
           (,x-funcall-convention-regexp (1 font-lock-builtin-face))
-	  ;(,x-funcall-regexp (1 font-lock-function-name-face))
+	  (,x-fundef-regexp (1 font-lock-function-name-face))
 	 
           ;;(,x-constants-regexp . font-lock-type-face)
 	  

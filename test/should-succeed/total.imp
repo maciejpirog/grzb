@@ -1,0 +1,7 @@
+(begin
+  (assert {> x 0})
+  (while* true
+          z
+          (> z 0)
+          (z := (- z 1)))
+  (assert true))
