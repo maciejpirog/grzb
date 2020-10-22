@@ -1,0 +1,59 @@
+; A logic programming-style definition of fibonacci
+
+(axiom {FIB 0 0})
+(axiom {FIB 1 1})
+(axiom {impl (>= i 0) (FIB i a) (FIB (+ i 1) b) (FIB (+ i 2) (+ a b))})
+
+; A recursive procedure. Note that if an argument is a variable, it is
+; given by reference. If you want to give the value of a variable x,
+; use (val x) as the argument.
+
+(define (fib n res)
+  {and (>= n 0) (init n)}
+  {and (FIB init-n res)}
+  (if (= n 0) (res := 0)
+  (if (= n 1) (res := 1)
+      (begin
+        (fib (- n 2) a)
+	(fib (- n 1) b)
+	; Z3 needs a little help here
+	(assert {and (>= n 2) (= n init-n) (FIB (- n 2) a) (FIB (- n 1) b)})
+	(res := (+ a b))))))
+
+; An iterative version of fib
+
+(define (swap x y)
+  {init x y}
+  {and (= x init-y) (= y init-x)}
+  (begin
+    (tmp := x)
+    (x := y)
+    (y := tmp)))
+
+(define (fib-iter n res)
+  {and (>= n 0) (init n)}
+  {FIB init-n res}
+  (begin
+    (res := 0)
+    (aux := 1)
+    (while {and (>= (- init-n n) 0)
+                (FIB (- init-n n) res)
+		(FIB (+ (- init-n n) 1) aux)}
+      (not (= n 0))
+      (begin
+        (swap res aux) ; the default is by reference
+	(aux := (+ res aux))
+        (n := (- n 1))))))
+
+; Let's call our procedures. Note that if we remove the val annotation from
+; res-rec, the postcondition does not hold, as the specification of
+; res-rec does not guarantee that it does not change n. But with the val
+; annotation, we're safe! (Otherwie, we could (init n) and then call fib
+; without anny annotation, but formulate the postcondition as
+; (FIB init-n res-rec).)
+
+(begin
+  (assert {>= n 0})
+  (fib-iter (val n) res-iter)
+  (fib      (val n) res-rec)
+  (assert {and (FIB n res-iter) (FIB n res-rec)}))

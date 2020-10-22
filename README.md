@@ -8,6 +8,8 @@ A While verifier powered by Z3
 
 The __grzb__ verifier implements both partial and total correctness rules of the standard Hoare logic for While programs. It can run in two modes: assuming that variables store either integers or reals. The generated proof obligations are discharged by Microsoft's [Z3](https://github.com/Z3Prover/z3) SMT solver. Interesting features include:
 
+- Recursive procedures with arguments passed by value or reference ([example](examples/fib.while))
+
 - One-dimensional arrays ([example](examples/array-max.while))
 
 - Induction schemes for natural numbers ([example](examples/even.while))
@@ -145,6 +147,25 @@ where:
 
 As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`) and we use all-caps for names of relations.
 
+Note that arrays are not first-class in the program, they can be referenced as arguments to relations (by adding a quote, e.g. `'a`), and bound by special quantifiers `forall-array` and `exists-array`. For example, a predicate that states that the part of an array in the bounds `[i .. j]` is sorted can be defined as the following relation:
+
+```
+(axiom {impl (<= i j) (iff (SORTED 'a i j)
+                           (forall (k m) (impl (<= i k m j) 
+						                 (<= (a . k) (a . m)))))})
+```
+
+Since free variables in axioms are closed by universal quantifiers,
+the above is synonymous to:
+
+
+```
+(axiom (forall-array (a) (forall (j i)
+  (impl (<= i j) (iff (SORTED 'a i j)
+                      (forall (k m) (impl (<= i k m j)
+					                (<= (a . k) (a . m))))))))
+```
+
 ### Initialization of variables
 
 `(init x y ... z)` is a macro for `(and (= x init-x) (= y init-y) ... (= z init-z))`. It is useful as the initial assertion.
@@ -194,6 +215,7 @@ For example, Z3 is not able to accept the following program without the inductio
 ```
 PROG ::= (axiom LOG-EXPR) PROG
       |  (check LOG-EXPR) PROG
+	  |  (define (PROC-NAME X ...) LOG-EXPR LOG-EXPR CMD
       |  CMD
 
 CMD ::= (skip)
@@ -203,26 +225,17 @@ CMD ::= (skip)
      |  (if B-EXPR CMD CMD)
      |  (while LOG-EXPR B-EXPR CMD)
      |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
+	 |  (PROC-NAME PROC-ARG ...)
      |  (assert LOG-EXPR)
+	 
+PROC-ARG ::= X
+          |  (ref X)
+		  |  (val X)
+		  |  A-EXPR
 ```
 
-where:
+#### Programs
 
-`(skip)` is a command that does nothing.
-
-`(begin c d ...)` is a sequential compositions of commands `c`, `d`, ...
-
-`(x := e)` assigns the value of the arithmetic expression `e` to the variable `x`.
-
-`((x . e) := f)` assigns the value of the arithmetic expression `f` to the `e`-th cell of the array `a`.
-
-`(if b c d)` is the obvious "if" command.
-
-`(while i b c)` is the while loop, where `i` is the invariant. It yields partial correctness of the loop.
-
-`(while* i v b c)` is the while loop that yields total correctness. The arithmetic expression `v` is the "variant" of the loop, that is a value which strictly decreases every iteration.
-
-`(assert f)` is a user asserion which specifies a condition that is met at a given point of the program. Most usually, we want one as the first step of the program (the precondition) and the last step (the postcondition).
 
 `(axiom f)` tells __grzb__ to include `f` as an assumption to every proof obligation. It is used to specify relations, as in the `FACTORIAL` example above. Free variables in every axiom are closed by a universal quantifier, so the following two definitions are equivalent:
 
@@ -251,4 +264,34 @@ Axioms are defined before the main statement of the program:
   (assert {FACTORIAL n res})))
 ```
 
-```(check f)``` run Z3 on a goal. As in the case of axioms, the formula ```f``` is always closed by a universal quantifier.
+`(check f)` run Z3 on a goal. As in the case of axioms, the formula ```f``` is always closed by a universal quantifier.
+
+`(define (foo x y z) pre post cmd)` defines a new recursive procedures with name `foo`` and arguments `x`, `y`, and `z`. The caller decides if the arguments are passed by value or reference. `pre` and `post` are pre- and postconditions of procedure call respectively. All defined procedures are mutually recursive.
+
+#### Commands
+
+`(skip)` is a command that does nothing.
+
+`(begin c d ...)` is a sequential compositions of commands `c`, `d`, ...
+
+`(x := e)` assigns the value of the arithmetic expression `e` to the variable `x`.
+
+`((x . e) := f)` assigns the value of the arithmetic expression `f` to the `e`-th cell of the array `a`.
+
+`(if b c d)` is the obvious "if" command.
+
+`(while i b c)` is the while loop, where `i` is the invariant. It yields partial correctness of the loop.
+
+`(while* i v b c)` is the while loop that yields total correctness. The arithmetic expression `v` is the "variant" of the loop, that is a value which strictly decreases every iteration.
+
+`(foo x y z)` invokes the procedure `foo` with arguments `x`, `y`, `z`. An argument could be:
+
+- a variable, in which case it is passed by reference,
+
+- `(ref x)` for a variable `x`, which also means passing `x` by reference,
+
+- `(val x)` for a variable `x`, which means passing `x` by value
+
+- an arithmetic expression, which is (of course) passed by value (except for the case when the arithmetic expression is a single variable).
+
+`(assert f)` is a user asserion which specifies a condition that is met at a given point of the program. Most usually, we want one as the first step of the program (the precondition) and the last step (the postcondition).
