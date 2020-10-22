@@ -33,7 +33,7 @@
 
 (struct log-rel
   ([o    : Symbol]
-   [args : (Listof A-expr)])
+   [args : (Listof Log-rel-arg)])
   #:transparent #:type-name Log-rel)
 
 ; Syntax
@@ -49,16 +49,19 @@
 (define-predicate log-cmpr? Log-cmpr)
 
 (define-type Quantifier-name
-  (U 'forall 'exists))
+  (U 'forall 'exists 'forall-array 'exists-array))
 
 (define-predicate quantifier-name? Quantifier-name)
+
+(define-type Log-rel-arg
+  (U A-expr Lexpr))
 
 (define-type Log-expr
   (U Log-const Log-var Log-op Log-cmp Log-quant Log-rel))
 
 (define-predicate log-expr? Log-expr)
 
-; Some helpers
+; Syntax constructors shorthands
 
 (: log-and (-> Log-expr * Log-expr))
 (define (log-and . xs)
@@ -96,6 +99,18 @@
 
 ; Free variables, arrays, and relations
 
+(: log-rel-arg-free-vars (-> Log-rel-arg (Listof Symbol)))
+(define (log-rel-arg-free-vars a)
+  (cond [(a-expr? a)
+         (a-free-vars a)]
+        [(lexpr-store? a)
+         (match a
+           [(lexpr-store x i v)
+            (set-union (a-free-vars i)
+                       (a-free-vars v)
+                       (log-rel-arg-free-vars x))])]
+        [(symbol? a) null]))
+
 (: log-free-vars (-> Log-expr (Listof Symbol)))
 (define (log-free-vars e)
   (match e
@@ -108,9 +123,22 @@
                             (apply set-union (map a-free-vars xs))
                             null)]
     [(log-quant n vs f) (set-subtract (log-free-vars f) vs)]
-    [(log-rel o xs)     (if (pair? xs)
-                            (apply set-union (map a-free-vars xs))
-                            null)]))
+    [(log-rel o xs)     (let ([ys (map log-rel-arg-free-vars xs)])
+                          (if (pair? ys)
+                              (apply set-union ys)
+                              null))]))
+
+(: log-rel-arg-list-arrays (-> Log-rel-arg (Listof Symbol)))
+(define (log-rel-arg-list-arrays a)
+  (cond [(a-expr? a)
+         (a-list-arrays a)]
+        [(lexpr-store? a)
+         (match a
+           [(lexpr-store x i v)
+            (set-union (a-list-arrays i)
+                       (a-list-arrays v)
+                       (log-rel-arg-list-arrays x))])]
+        [(symbol? a) (list a)]))
 
 (: log-list-arrays (-> Log-expr (Listof Symbol)))
 (define (log-list-arrays e)
@@ -123,12 +151,12 @@
     [(log-cmp o xs)     (if (pair? xs)
                             (apply set-union (map a-list-arrays xs))
                             null)]
-    [(log-quant n vs f) (log-list-arrays f)]
+    [(log-quant n vs f) (set-subtract (log-list-arrays f) vs)]
     [(log-rel o xs)     (if (pair? xs)
-                            (apply set-union (map a-list-arrays xs))
+                            (apply set-union (map log-rel-arg-list-arrays xs))
                             null)]))
 
-(: log-rels (-> Log-expr (Listof (Pair Symbol Exact-Nonnegative-Integer))))
+(: log-rels (-> Log-expr (Listof (Pair Symbol (Listof Boolean))))) ; #t = a-expr
 (define (log-rels e)
   (match e
     [(log-const v)      null]
@@ -138,7 +166,7 @@
                              null)]
     [(log-cmp o xs)     null]
     [(log-quant n vs f) (log-rels f)]
-    [(log-rel o xs)     (list (cons o (length xs)))]))
+    [(log-rel o xs)     (list (cons o (map a-expr? xs)))]))
 
 ; Every time we create a node with a quantifier, we generate fresh variables.
 ; It is enough to avoid capture, as gensym guarantees uniqueness and variables
@@ -152,19 +180,43 @@
                  (map (λ ([p : (Pairof Symbol Symbol)]) (cdr p)) fs)
                  (rename (assoc->fun fs) fp)))))
 
-(: close-universally (-> Log-expr Log-expr))
-(define (close-universally f)
+(: make-quant-array (-> Quantifier-name (Listof Symbol) Log-expr Log-expr))
+(define (make-quant-array name vs fp)
+  (if (null? vs) fp
+    (let ([fs (zip-fresh vs)])
+      (log-quant name
+                 (map (λ ([p : (Pairof Symbol Symbol)]) (cdr p)) fs)
+                 (rename-array (assoc->fun fs) fp)))))
+
+(: close-with (-> Quantifier-name Log-expr Log-expr))
+(define (close-with n f)
   (let ([fv (log-free-vars f)])
     (if (null? fv) f
-        (make-quant 'forall fv f))))
+        (make-quant n fv f))))
+
+(: close-with-array (-> Quantifier-name Log-expr Log-expr))
+(define (close-with-array n f)
+  (let ([fv (log-list-arrays f)])
+    (if (null? fv) f
+        (make-quant-array n fv f))))
+
+(: close-universally (-> Log-expr Log-expr))
+(define (close-universally f)
+  (close-with-array 'forall-array
+    (close-with 'forall f)))
 
 (: close-existentially (-> Log-expr Log-expr))
 (define (close-existentially f)
-  (let ([fv (log-free-vars f)])
-    (if (null? fv) f
-        (make-quant 'exists fv f))))
+  (close-with-array 'exists-array
+    (close-with 'exists f)))
 
 ; Rename quantified variables to avoid capture and in wp for procedure call
+
+(: log-rel-arg-rename (-> (Symbol -> Symbol) Log-rel-arg Log-rel-arg))
+(define (log-rel-arg-rename r a)
+  (cond [(a-expr? a)
+         (a-rename r a)]
+        [else (lexpr-rename r a)]))
 
 (: rename (-> (Symbol -> Symbol) Log-expr Log-expr))
 (define (rename r f)
@@ -174,15 +226,41 @@
     [(log-var y)
      (log-var (r y))]
     [(log-op o fs)
-     (log-op o (map (lambda ([g : Log-expr]) (rename r g)) fs))]
+     (log-op o (map (λ ([g : Log-expr]) (rename r g)) fs))]
     [(log-cmp o as)
-     (log-cmp o (map (lambda ([g : A-expr]) (a-rename r g)) as))]
+     (log-cmp o (map (λ ([g : A-expr]) (a-rename r g)) as))]
     [(log-quant n vs g)
      (log-quant n vs (rename r g))] ; vs are distinct thanks to gensym
     [(log-rel o as)
-     (log-rel o (map (lambda ([g : A-expr]) (a-rename r g)) as))]))
+     (log-rel o (map (λ ([g : Log-rel-arg]) (log-rel-arg-rename r g)) as))]))
+
+(: log-rel-arg-rename-array (-> (Symbol -> Symbol) Log-rel-arg Log-rel-arg))
+(define (log-rel-arg-rename-array r a)
+  (cond [(a-expr? a)     (a-rename-array r a)]
+        [else        (lexpr-rename-array r a)]))
+
+(: rename-array (-> (Symbol -> Symbol) Log-expr Log-expr))
+(define (rename-array r f)
+  (match f
+    [(log-const v)
+     (log-const v)]
+    [(log-var y)
+     (log-var y)]
+    [(log-op o fs)
+     (log-op o (map (λ ([g : Log-expr]) (rename-array r g)) fs))]
+    [(log-cmp o as)
+     (log-cmp o (map (λ ([g : A-expr]) (a-rename-array r g)) as))]
+    [(log-quant n vs g)
+     (log-quant n vs (rename-array r g))] ; vs are distinct thanks to gensym
+    [(log-rel o as)
+     (log-rel o (map (λ ([g : Log-rel-arg]) (log-rel-arg-rename-array r g)) as))]))
 
 ; Substitution
+
+(: log-rel-arg-subst-a (-> Symbol A-expr Log-rel-arg Log-rel-arg))
+(define (log-rel-arg-subst-a x e a)
+  (cond [(a-expr? a)     (a-subst-a x e a)]
+        [else        (lexpr-subst-a x e a)]))
 
 (: subst-a (-> Symbol A-expr Log-expr Log-expr))
 (define (subst-a x e f)
@@ -199,7 +277,7 @@
      (if (member x vs) f
          (log-quant n vs (subst-a x e g)))]
     [(log-rel o as)
-     (log-rel o (map (lambda ([g : A-expr]) (a-subst-a x e g)) as))]))
+     (log-rel o (map (lambda ([g : Log-rel-arg]) (log-rel-arg-subst-a x e g)) as))]))
 
 (: subst-arg (-> Symbol Arg-expr Log-expr Log-expr))
 (define (subst-arg x e f)
@@ -232,6 +310,11 @@
 
 ; Store substitution
 
+(: log-rel-arg-subst-store (-> Symbol A-expr A-expr Log-rel-arg Log-rel-arg))
+(define (log-rel-arg-subst-store x i e a)
+  (cond [(a-expr? a)     (a-subst-store x i e a)]
+        [else        (lexpr-subst-store x i e a)]))
+
 (: subst-store (-> Symbol A-expr A-expr Log-expr Log-expr))
 (define (subst-store x i e f)
   (match f
@@ -240,13 +323,14 @@
     [(log-var y)
      (log-var y)]
     [(log-op o fs)
-     (log-op o (map (lambda ([g : Log-expr]) (subst-store x i e g)) fs))]
+     (log-op o (map (λ ([g : Log-expr]) (subst-store x i e g)) fs))]
     [(log-cmp o fs)
-     (log-cmp o (map (lambda ([g : A-expr]) (a-subst-store x i e g)) fs))]
+     (log-cmp o (map (λ ([g : A-expr]) (a-subst-store x i e g)) fs))]
     [(log-quant n vs g)
      (log-quant n vs (subst-store x i e g))]
     [(log-rel o fs)
-     (log-rel o (map (lambda ([g : A-expr]) (a-subst-store x i e g)) fs))]))
+     (log-rel o (map (λ ([g : Log-rel-arg]) (log-rel-arg-subst-store x i e g))
+                     fs))]))
 
 ; Pretty printing
 
@@ -278,10 +362,17 @@
 
 (: log-pretty-print (-> Log-expr Any))
 (define (log-pretty-print e)
+
+  (: rel-arg-pretty-print (-> Log-rel-arg Any))
+  (define (rel-arg-pretty-print r)
+    (if (a-expr? r)
+        (a-pretty-print r)
+        (list 'quote (lexpr-pretty-print r))))
+  
   (match e
     [(log-const v) v]
     [(log-var x) x]
     [(log-op o es) (list* o (map log-pretty-print es))]
     [(log-cmp o es) (list* o (map a-pretty-print es))]
     [(log-quant n vs f) (list n vs (log-pretty-print f))]
-    [(log-rel o es) (list* o (map a-pretty-print es))]))
+    [(log-rel o es) (list* o (map rel-arg-pretty-print es))]))

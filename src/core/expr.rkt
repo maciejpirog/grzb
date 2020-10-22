@@ -166,6 +166,22 @@
     [(a-select x i)  (a-select (lexpr-rename f x) (a-rename f i))]
     [(a-op o xs)     (a-op o (map (λ ([g : A-expr]) (a-rename f g)) xs))]))
 
+(: lexpr-rename-array (-> (-> Symbol Symbol) Lexpr Lexpr))
+(define (lexpr-rename-array f l)
+  (match l
+    [(lexpr-store x i e)
+     (lexpr-store (lexpr-rename-array f x) (a-rename-array f i) (a-rename-array f e))]
+    [x (if (symbol? x) (f x) (error "Impossible!"))])) ; no idea why type-checker needs this :(
+
+(: a-rename-array (-> (-> Symbol Symbol) A-expr A-expr))
+(define (a-rename-array f e)
+  (match e
+    [(a-const v)     (a-const v)]
+    [(a-var x)       (a-var x)]
+    [(a-select x i)  (a-select (lexpr-rename-array f x) (a-rename-array f i))]
+    [(a-op o xs)     (a-op o (map (λ ([g : A-expr]) (a-rename-array f g)) xs))]))
+
+
 ; Substitution
 
 (: lexpr-subst-a (-> Symbol A-expr Lexpr Lexpr))

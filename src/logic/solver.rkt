@@ -28,8 +28,13 @@
 
 (: declare-rels (-> Var-mode Log-expr (Listof (U Smt-Func Z3-Ast))))
 (define (declare-rels vm f)
-  (map (λ ([sa : (Pair Symbol Exact-Nonnegative-Integer)])
-          (dynamic-declare-fun (car sa) (make-list (cdr sa) (var-mode vm)) Bool/s))
+  (map (λ ([sa : (Pair Symbol (Listof Boolean))]) ; #t = a-expr
+          (dynamic-declare-fun (car sa)
+                               (map (λ ([x : Boolean])
+                                       (if x (var-mode vm)
+                                             (Array/s (var-mode vm) (var-mode vm))))
+                                    (cdr sa))
+                               Bool/s))
        (log-rels f)))
 
 (: assert-formula (-> Var-mode Log-expr Void))
@@ -48,6 +53,12 @@
       [x (if (symbol? x) x
              (error "Impossible: malformed Lexpr"))])) ; Type checker too weak for this :(
 
+  (: make-formula-log-rel-arg (-> Log-rel-arg Smt-Expr))
+  (define (make-formula-log-rel-arg e)
+    (if (a-expr? e)
+        (make-formula-a e)
+        (make-formula-l e)))
+  
   (: make-formula-a (-> A-expr Smt-Expr))
   (define (make-formula-a e)
     (match e
@@ -119,9 +130,19 @@
        (dynamic-exists/s vs
                          (map (const (var-mode vm)) vs)
                          (make-formula g))]
+
+      [(log-quant 'forall-array vs g)
+       (dynamic-forall/s vs
+                         (map (const (Array/s (var-mode vm) (var-mode vm))) vs)
+                         (make-formula g))]
+
+      [(log-quant 'exists-array vs g)
+       (dynamic-exists/s vs
+                         (map (const (Array/s (var-mode vm) (var-mode vm))) vs)
+                         (make-formula g))]
       
       [(log-rel s xs)
-       (apply @/s (list* s (map make-formula-a xs)))]))
+       (apply @/s (list* s (map make-formula-log-rel-arg xs)))]))
 
   (assert! (make-formula f)))
 

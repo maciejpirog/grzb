@@ -1,0 +1,8 @@
+(define (goo x)
+  {> x x}
+  true
+  (skip))
+
+(begin
+  (assert true)
+  (goo 5))

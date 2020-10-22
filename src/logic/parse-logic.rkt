@@ -17,6 +17,8 @@
 (: parse-log (-> (Syntaxof Any) (Parse-monad Log-expr)))
 (define (parse-log s)
 
+  ; helpers
+  
   (: parse-quant (-> Quantifier-name (Syntaxof Any) (Syntaxof Any) (Parse-monad Log-expr)))
   (define (parse-quant name vars f)
     (combine2
@@ -27,6 +29,18 @@
       (parse-log f)
       (λ ([vs : (Listof Symbol)] [fp : Log-expr])
          (return (make-quant name vs fp)))))
+
+  (: parse-rel-arg (-> (Syntaxof Any) (Parse-monad Log-rel-arg)))
+  (define (parse-rel-arg x)
+    (let ([d (syntax->datum x)])
+      (if (and (list? d) (= (length d) 2) (eq? (first d) 'quote))
+          (let ([n (second d)])
+            (if (symbol? n)
+                (return n)
+                (ouch! s "Array name in an argument to a relation should be an identifier")))
+          (parse-a x))))
+
+  ; macros
 
   (: make-init-name (-> Symbol Symbol))
   (define (make-init-name s)
@@ -71,6 +85,8 @@
                          (make-quant 'forall (list x)
                                      (log-impl (log->= (a-var x) (a-const 0)) fp))))])))))
 
+  ; parse formula
+  
   (let ([e (syntax-e s)])
     (cond
       [(boolean? e)
@@ -112,8 +128,8 @@
                  [(induction-type? head)
                   (ouch! s "The correct form is \"(induction (x) <formula>)\"")]
                  [(symbol? head)
-                  (bind (apply combine (map parse-a (rest ss)))
-                        (λ ([xs : (Listof A-expr)]) (return (log-rel head xs))))]
+                  (bind (apply combine (map parse-rel-arg (rest ss)))
+                        (λ ([xs : (Listof Log-rel-arg)]) (return (log-rel head xs))))]
                  [(pair? (cdr ss))
                   (let ([sec (syntax->datum (second ss))])
                     (if (or (log-oper? sec) (log-cmpr? sec))

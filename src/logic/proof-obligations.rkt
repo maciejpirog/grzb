@@ -119,7 +119,7 @@
                      [(spre)    (foldr subst-arg dpre  dargs as)]
                      [(spost)   (foldr subst-arg dpost dargs as)])
          (make-quant 'exists evars
-            (and spre (log-quant 'forall avars (log-impl spost f)))))]
+            (log-and spre (log-quant 'forall avars (log-impl spost f)))))]
 
       [(annot g)
        (add! (make-obligation

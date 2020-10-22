@@ -1,0 +1,14 @@
+(define (foo x y)
+  {and (< x y) (init y)}
+  {and (= x (+ init-y 1)) (= y init-y) (= (a . 1) 123)}
+  (begin
+    (x := (+ y 1))
+    ((a . 1) := 123)))
+
+(begin
+  (assert {and (= j 0) (= k 5) (= z 11) (= (a . 1) 10) (= (a . 2) 20)})
+  ((a . 2) := (+ (a . 2) 10))
+  (foo j k)
+  (z := (+ z 1))
+  ((a . 2) := (+ (a . 2) 10))
+  (assert {and (= j 6) (= k 5) (= z 12) (= (a . 1) 123) (= (a . 2) 40)}))
