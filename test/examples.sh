@@ -1,6 +1,6 @@
 echo "** examples"
 sum=0
-for file in ../examples/*.while
+for file in ../examples/*.imp
 do
     # echo $file
     .././grzb $file >/dev/null

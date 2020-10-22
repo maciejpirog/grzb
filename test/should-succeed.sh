@@ -1,6 +1,6 @@
 echo "** should succeed tests"
 sum=0
-for file in should-succeed/*.while
+for file in should-succeed/*.imp
 do
     # $file
     .././grzb $file >/dev/null
