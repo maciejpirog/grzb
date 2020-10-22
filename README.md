@@ -266,7 +266,7 @@ Axioms are defined before the main statement of the program:
 
 `(check f)` run Z3 on a goal. As in the case of axioms, the formula ```f``` is always closed by a universal quantifier.
 
-`(define (foo x y z) pre post cmd)` defines a new recursive procedures with name `foo`` and arguments `x`, `y`, and `z`. The caller decides if the arguments are passed by value or reference. `pre` and `post` are pre- and postconditions of procedure call respectively. All defined procedures are mutually recursive.
+`(define (foo x y z) pre post cmd)` defines a new recursive procedure named `foo`and arguments `x`, `y`, and `z`. The caller decides if the arguments are passed by value or reference. `pre` and `post` are pre- and postconditions of procedure call respectively. All defined procedures are mutually recursive.
 
 #### Commands
 
