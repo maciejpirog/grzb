@@ -227,6 +227,7 @@ CMD ::= (skip)
      |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
      |  (PROC-NAME PROC-ARG ...)
      |  (assert LOG-EXPR)
+	 (  (dummy-po)
 	 
 PROC-ARG ::= X
           |  (ref X)
@@ -295,3 +296,5 @@ Axioms are defined before the main statement of the program:
 - an arithmetic expression, which is (of course) passed by value (except for the case when the arithmetic expression is a single variable).
 
 `(assert f)` is a user asserion which specifies a condition that is met at a given point of the program. Most usually, we want one as the first step of the program (the precondition) and the last step (the postcondition).
+
+`(dummy-po)` adds a trivial proof obligation with the current weakest precondition as an assumption. This is useful to reveal the computed precondition. 
