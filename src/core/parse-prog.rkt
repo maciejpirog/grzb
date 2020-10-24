@@ -67,6 +67,11 @@
             [(eq? head 'skip)
              (ouch! s "The correct form is \"(skip)\"")]
 
+            [(and (eq? head 'dummy-po) (= (length ss) 1))
+             (return (make (dummy-po)))]
+            [(eq? head 'dummy-po)
+             (ouch! s "The correct form is \"(dummy-po)\"")]
+
             [(and (= (length ss) 3) (eq? (syntax->datum (second ss)) ':=) (symbol? head))
              (bind (parse-a (third ss)) (λ ([e : A-expr])
                    (return (make (assign head e)))))]

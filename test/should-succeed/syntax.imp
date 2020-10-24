@@ -1,0 +1,7 @@
+(check true)
+
+(begin
+  (assert {init x})
+  (dummy-po)
+  (x := 5)
+  (assert {= x 5}))

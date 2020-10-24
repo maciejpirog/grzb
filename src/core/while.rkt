@@ -69,11 +69,15 @@
   ([val : Log-expr])
   #:transparent #:type-name Annot)
 
+(struct dummy-po
+  ()
+  #:transparent #:type-name Dummy-po)
+
 ; Syntax
 
 (define-type (Core-cons meta)
   (U Skip (Comp meta) Assign Store (While meta) (While* meta)
-     (If-stm meta) Proc-call Annot))
+     (If-stm meta) Proc-call Annot Dummy-po))
 
 (define-type (Core meta)
   (With-meta meta (Core-cons meta)))

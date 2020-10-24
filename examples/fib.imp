@@ -45,11 +45,11 @@
 	(aux := (+ res aux))
         (n := (- n 1))))))
 
-; Let's call our procedures. Note that if we remove the val annotation from
-; res-rec, the postcondition does not hold, as the specification of
-; res-rec does not guarantee that it does not change n. But with the val
-; annotation, we're safe! (Otherwie, we could add (init n) and then call
-; fib without any annotation, but formulate the postcondition as
+; Let's call our procedures. Note that if we remove the val annotation
+; from fib, the postcondition does not hold, as the specification of
+; fib does not guarantee that it does not change n. But with the val
+; annotation, we're safe! (Otherwie, we could add (init n) and then
+; call fib without any annotation, but formulate the postcondition as
 ; (FIB init-n res-rec).)
 
 (begin

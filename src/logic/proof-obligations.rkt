@@ -33,7 +33,7 @@
 (define-type PO-type
   (U 'check 'user-defined 'while-postcondition 'while-body-precondition
      'while*-postcondition 'while*-body-precondition 'while*-variant-nonnegative
-     'procedure-precondition))
+     'procedure-precondition 'dummy))
      
 
 ; Calculate the weakest precondition together with proof obligations
@@ -127,7 +127,15 @@
               'user-defined
               g
               f))
-       g]))
+       g]
+
+      [(dummy-po)
+       (add! (make-obligation
+              (get-meta c)
+              'dummy
+              f
+              (log-const #t)))
+       f]))
 
   ; body of weakest-precondition
   (let ([res (wp c postcondition)])

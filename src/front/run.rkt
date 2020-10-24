@@ -78,7 +78,8 @@
       ['while*-body-precondition   "Precondition of while* loop body"]
       ['while*-variant-nonnegative "Variant of while* nonnegative"]
       ['procedure-precondition     "Procedure precondition"]
-      ['check                      "Explicit check"]))
+      ['check                      "Explicit check"]
+      ['dummy                      "Dummy proof obligation"]))
   
   (match ob
     [(proof-obligation m d f)

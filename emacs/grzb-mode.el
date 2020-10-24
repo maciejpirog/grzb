@@ -10,7 +10,7 @@
 	    
             ;; generate regex string for each category of keywords
 	    ;(x-keywords-regexp (regexp-opt x-keywords 'words))
-	    (x-keywords-regexp "([ ]*\\(define\\|begin\\|skip\\|if\\|while\\*\\|while\\|assert\\|axiom\\|check\\)\\( \\|$\\|)\\)")
+	    (x-keywords-regexp "([ ]*\\(define\\|begin\\|skip\\|if\\|while\\*\\|while\\|assert\\|axiom\\|check\\|dummy-po\\)\\( \\|$\\|)\\)")
 	    ;;(x-types-regexp "{[^}]*}")
 	    (x-types-regexp "{\\([^}]*\\)}")
 	    (x-types2-regexp "([ ]*\\(assert\\|while\\*\\|while\\|axiom\\|check\\)[ ]+\\([A-za-z0-9!@#$%^&*<>'-]*\\)")
@@ -187,7 +187,7 @@
 
 ;; 
 
-(add-to-list 'auto-mode-alist '("\\.while\\'" . grzb-mode))
+(add-to-list 'auto-mode-alist '("\\.imp\\'" . grzb-mode))
 
 ;; add the mode to the `features' list
 (provide 'grzb-mode)

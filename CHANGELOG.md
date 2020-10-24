@@ -1,5 +1,15 @@
 # grzb changelog
 
+## HEAD
+
+- Rebranding: the langauge is no more a merely "While", it is now a proper "Imp"
+
+- Support for recursive procedures
+
+- New weakest-precondition generation
+
+- Dummy proof obligations (dummy-po), useful for debugging Imp programs 
+
 ## 0.2.0
 
 - Support for arrays implemented by introducing L-expressions in A-exprs (but not exposing them to the user), a la Mike Gordon's notes
