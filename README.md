@@ -215,7 +215,7 @@ For example, Z3 is not able to accept the following program without the inductio
 ```
 PROG ::= (axiom LOG-EXPR) PROG
       |  (check LOG-EXPR) PROG
-      |  (define (PROC-NAME X ...) LOG-EXPR LOG-EXPR CMD
+      |  (define (PROC-NAME X ...) LOG-EXPR LOG-EXPR CMD) PROG
       |  CMD
 
 CMD ::= (skip)
@@ -227,7 +227,7 @@ CMD ::= (skip)
      |  (while* LOG-EXPR A-EXPR B-EXPR CMD)
      |  (PROC-NAME PROC-ARG ...)
      |  (assert LOG-EXPR)
-	 (  (dummy-po)
+     |  (dummy-po)
 	 
 PROC-ARG ::= X
           |  (ref X)
