@@ -1,0 +1,14 @@
+; total correctness for procedures
+
+(define* (foo n res)
+  {>= n 0}
+  true
+  n
+  (begin
+    (m := n)
+    (n := (+ n 10))
+    (if (= m 0)
+      (res := 0)
+      (foo (- m 1) res))))
+
+(foo 5 res)

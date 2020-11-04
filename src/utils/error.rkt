@@ -73,4 +73,11 @@
   (if (and (success? a) (success? b) (success? c) (success? d))
       (f (success-val a) (success-val b) (success-val c) (success-val d))
       (errors (append (get-errors a) (get-errors b) (get-errors c) (get-errors d)))))
+
+(: combine5 (All (e a b c d f r) (-> (Try e a) (Try e b) (Try e c) (Try e d) (Try e f) (-> a b c d f (Try e r))
+                                     (Try e r))))
+(define (combine5 a b c d g f)
+  (if (and (success? a) (success? b) (success? c) (success? d) (success? g))
+      (f (success-val a) (success-val b) (success-val c) (success-val d) (success-val g))
+      (errors (append (get-errors a) (get-errors b) (get-errors c) (get-errors d) (get-errors g)))))
         

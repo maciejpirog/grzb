@@ -203,6 +203,12 @@
     [(a-op s es)
      (a-op s (map (λ ([f : A-expr]) (a-subst-a x e f)) es))]))
 
+(: a-subst-arg (-> Symbol Arg-expr A-expr A-expr))
+(define (a-subst-arg x e f)
+  (if (a-expr? e)
+      (a-subst-a x e f)
+      (a-subst-a x (a-var (by-ref-var e)) f)))
+
 (: b-subst-a (-> Symbol A-expr B-expr B-expr))
 (define (b-subst-a x e ee)
   (match ee

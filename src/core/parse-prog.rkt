@@ -171,18 +171,44 @@
                      (return symb-list)
                      (ouch! s (string-append "Malformed definition head\n"
                                              "The correct form is \"(define (name arg ...) "
-                                             "<precondition> <postcondition> <body>\""))))
+                                             "<precondition> <postcondition> <body>)\""))))
                  (parse-log raw-pre)
                  (parse-log raw-post)
                  (parse     raw-body)
                  (λ ([head : (Listof Symbol)] [pre : Log-expr]
                      [post : Log-expr] [body : (Core Pos)])
-                    (return (make (def (first head)
-                                       (rest head)
-                                       pre post body))))))]
+                    (return (make (proc-def (first head)
+                                            (rest head)
+                                            pre post body))))))]
             [(eq? head 'define)
              (ouch! s (string-append "The correct form is \"(define (name arg ...) "
-                                     "<precondition> <postcondition> <body>\""))]
+                                     "<precondition> <postcondition> <body>)\""))]
+
+            [(and (eq? head 'define*) (= (length ss) 6))
+             (let ([raw-pattern (second ss)]
+                   [raw-pre     (third ss)]
+                   [raw-post    (fourth ss)]
+                   [raw-dec     (fifth ss)]
+                   [raw-body    (sixth ss)])
+               (combine5
+                 (let ([symb-list (syntax->datum raw-pattern)])
+                   (if (and (list? symb-list) (pair? symb-list) (andmap symbol? symb-list))
+                     (return symb-list)
+                     (ouch! s (string-append "Malformed definition head\n"
+                                             "The correct form is \"(define (name arg ...) "
+                                             "<precondition> <postcondition> <body>)\""))))
+                 (parse-log raw-pre)
+                 (parse-log raw-post)
+                 (parse-a   raw-dec)
+                 (parse     raw-body)
+                 (λ ([head : (Listof Symbol)] [pre : Log-expr] [post : Log-expr]
+                     [dec : A-expr] [body : (Core Pos)])
+                    (return (make (proc*-def (first head)
+                                             (rest head)
+                                             pre post dec body))))))]
+            [(eq? head 'define*)
+             (ouch! s (string-append "The correct form is \"(define* (name arg ...) "
+                                     "<precondition> <postcondition> <variant> <body>)\""))]
 
             [else (ouch! s "Ill-formed definition")])))))
 
@@ -208,8 +234,10 @@
   (: filter-def (-> (Garnish pos) (Listof (With-meta pos (Def pos)))))
   (define (filter-def a)
     (match a
-      [(with-meta m (def n as p pp b))
-       (list (with-meta (get-meta a) (def n as p pp b)))]
+      [(with-meta m (proc-def n as p pp b))
+       (list (with-meta (get-meta a) (proc-def n as p pp b)))]
+      [(with-meta m (proc*-def n as p pp d b))
+       (list (with-meta (get-meta a) (proc*-def n as p pp d b)))]
       [_ null]))
   
   (program (append-map filter-axiom gs)

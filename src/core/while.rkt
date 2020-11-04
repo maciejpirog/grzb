@@ -96,13 +96,55 @@
   ([val  : Log-expr])
   #:transparent #:type-name Check)
 
-(struct (meta) def
+(struct (meta) proc-def
   ([name : Symbol]
    [args : (Listof Symbol)]
    [pre  : Log-expr]
    [post : Log-expr]
    [body : (Core meta)])
-  #:transparent #:type-name Def)
+  #:transparent #:type-name Proc-def)
+
+(struct (meta) proc*-def
+  ([name : Symbol]
+   [args : (Listof Symbol)]
+   [pre  : Log-expr]
+   [post : Log-expr]
+   [dec  : A-expr]
+   [body : (Core meta)])
+  #:transparent #:type-name Proc*-def)
+
+(define-type (Def meta)
+  (U (Proc-def meta) (Proc*-def meta)))
+
+(: def-name (All (meta) (-> (Def meta) Symbol)))
+(define (def-name d)
+  (cond [(proc-def?  d) (proc-def-name  d)]
+        [(proc*-def? d) (proc*-def-name d)]))
+
+(: def-args (All (meta) (-> (Def meta) (Listof Symbol))))
+(define (def-args d)
+  (cond [(proc-def?  d) (proc-def-args  d)]
+        [(proc*-def? d) (proc*-def-args d)]))
+
+(: def-pre (All (meta) (-> (Def meta) Log-expr)))
+(define (def-pre d)
+  (cond [(proc-def?  d) (proc-def-pre  d)]
+        [(proc*-def? d) (proc*-def-pre d)]))
+
+(: def-post (All (meta) (-> (Def meta) Log-expr)))
+(define (def-post d)
+  (cond [(proc-def?  d) (proc-def-post  d)]
+        [(proc*-def? d) (proc*-def-post d)]))
+
+(: def-body (All (meta) (-> (Def meta) (Core meta))))
+(define (def-body d)
+  (cond [(proc-def?  d) (proc-def-body  d)]
+        [(proc*-def? d) (proc*-def-body d)]))
+
+(: def-dec (All (meta) (-> (Def meta) (U A-expr Void))))
+(define (def-dec d)
+  (cond [(proc-def?  d) (void)]
+        [(proc*-def? d) (proc*-def-dec d)]))
 
 (define-type (Garnish-data meta)
   (U Axiom Check (Def meta)))
@@ -129,9 +171,10 @@
   (map (compose close-universally (compose axiom-val get-data-aux))
        (program-axioms p)))
 
-(: proc-specification (All (meta) (-> (Program meta) Symbol
-                                      (Values (Listof Symbol) Log-expr Log-expr))))
-(define (proc-specification p s)
+(: get-procedure-def (All (meta) (-> (Program meta)
+                                     Symbol
+                                     (Def meta))))
+(define (get-procedure-def p s)
 
   (: this-one? (-> (With-meta meta (Def meta)) Boolean))
   (define (this-one? w)
@@ -139,6 +182,5 @@
   
   (let ([w (filter this-one? (program-defs p))])
     (if (null? w)
-        (error "Impossible! Undefined procedure" s)
-        (let ([d (get-data (car w))])
-          (values (def-args d) (def-pre d) (def-post d))))))
+        (error "Undefined procedure" s)
+        (get-data (car w)))))

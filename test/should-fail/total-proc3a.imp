@@ -1,0 +1,33 @@
+(define* (f n)
+  {>= n 0}
+  true
+  n
+  (if (= n 0) (skip) (g (- n 1))))
+
+(define* (g n)
+  {>= n 0}
+  true
+  n
+  (if (= n 0) (goo (- n 1)) (f (- n 1))))
+
+(define* (foo n)
+  {>= n 0}
+  true
+  n
+  (if (> n 100)
+      (foo (- n 1))
+      (if (= n 0) (skip) (goo (- n 1)))))
+
+(define* (goo n)
+  {>= n 0}
+  true
+  n
+  (if (= n 0) (f 100) (boo (- n 1))))
+
+(define* (boo n)
+  {>= n 0}
+  true
+  n
+  (if (= n 0) (g (+ n 100)) (foo (- n 1))))
+
+(f 10)

@@ -1,0 +1,41 @@
+; total correctness for procedures
+
+; mutually recursive procedures need to share the value of the variant
+
+(define* (even n res)
+  {>= n 0}
+  true
+  n
+  (if (= n 0)
+      (res := 1)
+      (odd (- n 1) res)))
+
+(define* (odd n res)
+  {>= n 0}
+  true
+  n
+  (if (= n 0)
+      (res := 0)
+      (even (- n 1) res)))
+
+; mutually recursive but with a more complicated variant
+
+(define* (foo n m k res)
+  {and (>= n 0) (>= m 0) (>= k 0)}
+  true
+  {+ n m k}
+  (if (= n 0)
+      (res := 1)
+      (goo (- n 1) (+ m k) res)))
+
+(define* (goo n m res)
+  {and (>= n 0) (>= m 0)}
+  true
+  {+ n m}
+  (if (= n 0)
+      (res := 0)
+      (if (> m 10)
+        (foo 3 (- m 6) (+ n 2) res)
+        (goo m (- n 1) res))))
+
+(even 5 res)

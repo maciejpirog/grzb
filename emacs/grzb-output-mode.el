@@ -3,6 +3,7 @@
 	    (x-headers '("--- proof obligation ---" " grzb "))
 	    (x-errors '("--- error ---" "Error: "))
             (x-keywords-regexp "^ok$")
+	    (x-counterexample-regexp "^Counterexample:$")
             (x-headers-regexp (regexp-opt x-headers))
 	    (x-errors-regexp (regexp-opt x-errors))
 	    (x-list-regexp "^\\(* \\|=> \\)")
@@ -10,7 +11,8 @@
             )
 
        `(
-          (,x-keywords-regexp . font-lock-keyword-face)
+	  (,x-keywords-regexp . font-lock-keyword-face)
+	  (,x-counterexample-regexp . font-lock-variable-name-face)
           (,x-headers-regexp . font-lock-keyword-face)
           (,x-errors-regexp . font-lock-warning-face)
           (,x-list-regexp . font-lock-builtin-face)

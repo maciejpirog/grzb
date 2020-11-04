@@ -216,6 +216,7 @@ For example, Z3 is not able to accept the following program without the inductio
 PROG ::= (axiom LOG-EXPR) PROG
       |  (check LOG-EXPR) PROG
       |  (define (PROC-NAME X ...) LOG-EXPR LOG-EXPR CMD
+	  |  (define* (PROC-NAME X ...) LOG-EXPR LOG-EXPR A-EXPR CMD
       |  CMD
 
 CMD ::= (skip)
@@ -267,7 +268,9 @@ Axioms are defined before the main statement of the program:
 
 `(check f)` run Z3 on a goal. As in the case of axioms, the formula ```f``` is always closed by a universal quantifier.
 
-`(define (foo x y z) pre post cmd)` defines a new recursive procedure named `foo`and arguments `x`, `y`, and `z`. The caller decides if the arguments are passed by value or reference. `pre` and `post` are pre- and postconditions of procedure call respectively. All defined procedures are mutually recursive.
+`(define (foo x y z) pre post cmd)` defines a recursive procedure named `foo`and arguments `x`, `y`, and `z`. The caller decides if the arguments are passed by value or reference. `pre` and `post` are pre- and postconditions of procedure call respectively. Procedures can be mutually recursive.
+
+`(define* (foo x y z) pre post v cmd)` defines a total recursive procedure. The arithmetic expression `v` is the "variant", that is, a value which strictly decreases every recursive call. A group of mutually recursive procedures shares the variant.
 
 #### Commands
 
@@ -283,7 +286,7 @@ Axioms are defined before the main statement of the program:
 
 `(while i b c)` is the while loop, where `i` is the invariant. It yields partial correctness of the loop.
 
-`(while* i v b c)` is the while loop that yields total correctness. The arithmetic expression `v` is the "variant" of the loop, that is a value which strictly decreases every iteration.
+`(while* i v b c)` is the while loop that yields total correctness. The arithmetic expression `v` is the "variant" of the loop, that is, a value which strictly decreases every iteration.
 
 `(foo x y z)` invokes the procedure `foo` with arguments `x`, `y`, `z`. An argument could be:
 
