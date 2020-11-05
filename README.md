@@ -128,7 +128,7 @@ where:
 PROG ::= (axiom LOG-EXPR) PROG
       |  (check LOG-EXPR) PROG
       |  (define (PROC-NAME X ...) LOG-EXPR LOG-EXPR CMD) PROG
-	  |  (define* (PROC-NAME X ...) LOG-EXPR LOG-EXPR A-EXPR CMD) PROG
+      |  (define* (PROC-NAME X ...) LOG-EXPR LOG-EXPR A-EXPR CMD) PROG
       |  CMD
 
 CMD ::= (skip)
