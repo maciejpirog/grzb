@@ -11,12 +11,12 @@
 (: called-procs (All (meta) (-> (Core meta) (Listof Symbol))))
 (define (called-procs c)
   (match (get-data c)
-      [(comp l r) (set-union (called-procs l) (called-procs r))]
-      [(while i b d) (called-procs d)]
-      [(while* i v b d) (called-procs d)]
-      [(if-stm b t e) (set-union (called-procs t) (called-procs e))]
-      [(proc-call s as) (list s)]
-      [_  null]))
+      [(comp l r)        (set-union (called-procs l) (called-procs r))]
+      [(while i b d)     (called-procs d)]
+      [(while* i v b d)  (called-procs d)]
+      [(if-stm b t e)    (set-union (called-procs t) (called-procs e))]
+      [(proc-call s as)  (list s)]
+      [_                 null]))
 
 (: make-graph (All (meta) (-> (Program meta) Graph)))
 (define (make-graph p)

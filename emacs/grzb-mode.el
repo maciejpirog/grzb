@@ -46,20 +46,31 @@
 
 ;; variable mode
 
-;(make-local-variable 'var-mode)
 (setq var-mode 'integer)
 
 (defun grzb-var-mode-integer ()
-  "Set variable mode to `integer'."
+  "Set variable mode to `integer'"
   (interactive)
   (setq var-mode 'integer))
 
 (defun grzb-var-mode-real ()
-  "Set variable mode to `real'."
+  "Set variable mode to `real'"
   (interactive)
   (setq var-mode 'real))
 
+;; termination mode
+
+(setq termination-mode 'nope)
+
+(defun grzb-toggle-termination-mode ()
+  "Toggle termination of verified program"
+  (interactive)
+  (if (eq termination-mode 'nope)
+      (setq termination-mode 'yep)
+      (setq termination-mode 'nope)))
+
 ;; evaluating buffer
+
 (defcustom grzb-path-to-bin nil
   "Path to the grzb interpreter's directory"
   :group 'grzb :type 'directory)
@@ -79,9 +90,11 @@
       (error "grzb executable not found! Make sure it is in exec-path or that `grzb-path-to-bin' is set appropriately."))
     (let ((olddir default-directory)
 	  (vmode (if (eq var-mode 'integer) "--mode-integer"
-		   (if (eq var-mode 'real) "--mode-real" "--help"))))
+		   (if (eq var-mode 'real) "--mode-real" "--help")))
+          (tmode (if (eq termination-mode 'yep) " -t " ""))
+	  )
       (cd (substring grzb-command 0 -5))
-      (compile (concat grzb-command " " vmode " " file-name) 'grzb-output-mode)
+      (compile (concat grzb-command " " tmode vmode " " file-name) 'grzb-output-mode)
       (minibuffer-message olddir)
       (cd olddir))))
 
@@ -100,9 +113,11 @@
       (error "grzb executable not found! Make sure it is in exec-path or that `grzb-path-to-bin' is set appropriately."))
     (let ((olddir default-directory)
 	  (vmode (if (eq var-mode 'integer) "--mode-integer"
-		   (if (eq var-mode 'real) "--mode-real" "--help"))))
+		   (if (eq var-mode 'real) "--mode-real" "--help")))
+	  (tmode (if (eq termination-mode 'yep) " -t " ""))
+	 )
       (cd (substring grzb-command 0 -5))
-      (compile (concat grzb-command " -v " vmode " "file-name) 'grzb-output-mode)
+      (compile (concat grzb-command " -v " tmode vmode " "file-name) 'grzb-output-mode)
       (minibuffer-message olddir)
       (cd olddir))))
 
@@ -118,8 +133,10 @@
     (when (null grzb-command)
       (error "grzb executable not found! Make sure it is in exec-path or that `grzb-path-to-bin' is set appropriately."))
     (let ((vmode (if (eq var-mode 'integer) "--mode-integer"
-		   (if (eq var-mode 'real) "--mode-real" "--help"))))
-      (compile (concat grzb-command " " vmode " " file-name) 'grzb-output-mode)
+		   (if (eq var-mode 'real) "--mode-real" "--help")))
+          (tmode (if (eq termination-mode 'yep) " -t " ""))
+	 )
+      (compile (concat grzb-command " " tmode vmode " " file-name) 'grzb-output-mode)
       )))
 
 (defun grzb-docker-verbose-verify-buffer (&optional BUFFER)
@@ -134,8 +151,10 @@
     (when (null grzb-command)
       (error "grzb executable not found! Make sure it is in exec-path or that `grzb-path-to-bin' is set appropriately."))
     (let ((vmode (if (eq var-mode 'integer) "--mode-integer"
-		   (if (eq var-mode 'real) "--mode-real" "--help"))))
-      (compile (concat grzb-command " -v " vmode " " file-name) 'grzb-output-mode)
+		   (if (eq var-mode 'real) "--mode-real" "--help")))
+	  (tmode (if (eq termination-mode 'yep) " -t " ""))
+	 )
+      (compile (concat grzb-command " -v " tmode vmode " " file-name) 'grzb-output-mode)
       )))
 
 (defvar grzb-mode-map
@@ -146,6 +165,12 @@
     (define-key map "\C-c\C-d\C-c" #'grzb-docker-verify-buffer)
     (define-key map "\C-c\C-d\C-p" #'grzb-docker-verbose-verify-buffer)
     (define-key map [menu-bar grzb-mode] (cons "grzb" menu-map))
+
+    (define-key menu-map [grzbtm]
+      (list 'menu-item "Check termination" 'grzb-toggle-termination-mode
+            :button '(:toggle . (eq termination-mode 'yep))))
+
+    (define-key menu-map [grzbs3] '("--single-line"))
 
     (define-key menu-map [grzbrm]
       (list 'menu-item "Real Mode" 'grzb-var-mode-real
@@ -179,7 +204,7 @@
 
 ;;;###autoload
 (define-derived-mode grzb-mode prog-mode "grzb mode"
-  "Major mode for editing While files to be used in grzb
+  "Major mode for editing imp files to be used in grzb
 \\{grzb-mode-map}
 "
 ;; code for syntax highlighting

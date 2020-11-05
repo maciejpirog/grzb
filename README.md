@@ -121,94 +121,6 @@ where:
 
 `impl` is an implication. In particular, `(impl a b ... c z)` is equivalent to `(impl (and a b ... c) z)`.
 
-### Verification logic
-
-```
-LOG-EXPR ::= (B-OP LOG-EXPR ...)
-          |  (B-CMP A-EXPR ...)
-          |  true | false
-          |  (forall (X ...) LOG-EXPR)
-          |  (exists (X ...) LOG-EXPR)
-          |  (REL A-EXPR ...)
-          |  (init X ...)
-          |  (INDUCTION-SCHEME (X) LOG-EXPR)
-```
-
-where:
-
-`(X ...)` stands for a non-empty list of variables (symbols)
-
-`REL` is a name of a relation. Relations are user-specified (via `axiom` statements), e.g., one can specify (in the style of logic programming) a relation `FACTORIAL` such that `(FACTORIAL n k)` holds if `k` is a factorial of `n`:
-
-```
-(axiom {FACTORIAL 0 1})
-(axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
-```
-
-As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`) and we use all-caps for names of relations.
-
-Note that arrays are not first-class in the program, they can be referenced as arguments to relations (by adding a quote, e.g. `'a`), and bound by special quantifiers `forall-array` and `exists-array`. For example, a predicate that states that the part of an array in the bounds `[i .. j]` is sorted can be defined as the following relation:
-
-```
-(axiom {impl (<= i j) (iff (SORTED 'a i j)
-                           (forall (k m) (impl (<= i k m j) 
-                                         (<= (a . k) (a . m)))))})
-```
-
-Since free variables in axioms are closed by universal quantifiers,
-the above is synonymous to:
-
-
-```
-(axiom (forall-array (a) (forall (j i)
-  (impl (<= i j) (iff (SORTED 'a i j)
-                      (forall (k m) (impl (<= i k m j)
-                                    (<= (a . k) (a . m))))))))
-```
-
-### Initialization of variables
-
-`(init x y ... z)` is a macro for `(and (= x init-x) (= y init-y) ... (= z init-z))`. It is useful as the initial assertion.
-
-### Induction schemes
-
-`(INDUCTION-SCHEME (x) f)` is a macro for induction on natural numbers, where `f` stands for a predicate with a free variable `x`. Because nothing in __grzb__ is higher-order, we need to generate a new induction theorem for every predicate separately. There are two predefined recursion schemes:
-
-`(induction (x) (P x))` stands for:
-
-```
-(impl (P 0)
-      (forall (x) (impl (>= x 0) (P x) (P (+ x 1))))
-      (forall (x) (impl (>= x 0) (P x))))
-```
-
-while
-
-`(induction< (x) (P x))` stands for
-
-```
-(impl (forall (x) (impl (>= x 0)
-                        (forall (y) (impl (>= y 0) (< y x)
-                                          (P y)))
-                        (P x)))
-      (forall (x) (impl (>= x 0) (P x))))
-```
-
-For example, Z3 is not able to accept the following program without the induction axiom:
-
-```
-(axiom {EVEN 0})
-(axiom {impl (>= n 0) (EVEN n) (EVEN (+ n 2))})
-
-(axiom {induction (x) (or (EVEN x) (EVEN (+ x 1)))})
-
-(begin
-  (assert {>= x 0})
-  (y := (+ x 1))
-  (assert {or (EVEN x) (EVEN y)}))
-```
-
-:heavy_exclamation_mark: Induction axioms are (of course) not sound in the `real` mode.
 
 ### The IMP language
 
@@ -301,3 +213,92 @@ Axioms are defined before the main statement of the program:
 `(assert f)` is a user asserion which specifies a condition that is met at a given point of the program. Most usually, we want one as the first step of the program (the precondition) and the last step (the postcondition).
 
 `(dummy-po)` adds a trivial proof obligation with the current weakest precondition as an assumption. This is useful to reveal the computed precondition. 
+
+### Verification logic
+
+```
+LOG-EXPR ::= (B-OP LOG-EXPR ...)
+          |  (B-CMP A-EXPR ...)
+          |  true | false
+          |  (forall (X ...) LOG-EXPR)
+          |  (exists (X ...) LOG-EXPR)
+          |  (REL A-EXPR ...)
+          |  (init X ...)
+          |  (INDUCTION-SCHEME (X) LOG-EXPR)
+```
+
+where:
+
+`(X ...)` stands for a non-empty list of variables (symbols)
+
+`REL` is a name of a relation. Relations are user-specified (via `axiom` statements), e.g., one can specify (in the style of logic programming) a relation `FACTORIAL` such that `(FACTORIAL n k)` holds if `k` is a factorial of `n`:
+
+```
+(axiom {FACTORIAL 0 1})
+(axiom {impl (> n 0) (FACTORIAL (- n 1) k) (FACTORIAL n (* k n))})
+```
+
+As a convention, we write verification logic expressions in curly braces (except of course the constants `true` and `false`) and we use all-caps for names of relations.
+
+Note that arrays are not first-class in the program, they can be referenced as arguments to relations (by adding a quote, e.g. `'a`), and bound by special quantifiers `forall-array` and `exists-array`. For example, a predicate that states that the part of an array in the bounds `[i .. j]` is sorted can be defined as the following relation:
+
+```
+(axiom {impl (<= i j) (iff (SORTED 'a i j)
+                           (forall (k m) (impl (<= i k m j) 
+                                         (<= (a . k) (a . m)))))})
+```
+
+Since free variables in axioms are closed by universal quantifiers,
+the above is synonymous to:
+
+
+```
+(axiom (forall-array (a) (forall (j i)
+  (impl (<= i j) (iff (SORTED 'a i j)
+                      (forall (k m) (impl (<= i k m j)
+                                          (<= (a . k) (a . m))))))))
+```
+
+### Initialization of variables
+
+`(init x y ... z)` is a macro for `(and (= x init-x) (= y init-y) ... (= z init-z))`. It is useful as the initial assertion.
+
+### Induction schemes
+
+`(INDUCTION-SCHEME (x) f)` is a macro for induction on natural numbers, where `f` stands for a predicate with a free variable `x`. Because nothing in __grzb__ is higher-order, we need to generate a new induction theorem for every predicate separately. There are two predefined recursion schemes:
+
+`(induction (x) (P x))` stands for:
+
+```
+(impl (P 0)
+      (forall (x) (impl (>= x 0) (P x) (P (+ x 1))))
+      (forall (x) (impl (>= x 0) (P x))))
+```
+
+while
+
+`(induction< (x) (P x))` stands for
+
+```
+(impl (forall (x) (impl (>= x 0)
+                        (forall (y) (impl (>= y 0) (< y x)
+                                          (P y)))
+                        (P x)))
+      (forall (x) (impl (>= x 0) (P x))))
+```
+
+For example, Z3 is not able to accept the following program without the induction axiom:
+
+```
+(axiom {EVEN 0})
+(axiom {impl (>= n 0) (EVEN n) (EVEN (+ n 2))})
+
+(axiom {induction (x) (or (EVEN x) (EVEN (+ x 1)))})
+
+(begin
+  (assert {>= x 0})
+  (y := (+ x 1))
+  (assert {or (EVEN x) (EVEN y)}))
+```
+
+:heavy_exclamation_mark: Induction axioms are (of course) not sound in the `real` mode.

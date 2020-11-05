@@ -11,6 +11,9 @@
 (: version-mode (Parameter Boolean))
 (define version-mode (make-parameter #f))
 
+(: termination-mode (Parameter Boolean))
+(define termination-mode (make-parameter #f))
+
 (: var-mode (Parameter Var-mode))
 (define var-mode (make-parameter 'integer))
 
@@ -26,6 +29,10 @@
    #:once-each
    [("--verbose" "-v") "Show all generated proof obligations"
                        (verbose-mode #t)]
+
+   #:once-each
+   [("--termination" "-t") "Make sure that the program terminates"
+                           (termination-mode #t)]
    
    #:once-any
    [("--mode-integer") "Type of variables is Integer (default)"
@@ -44,5 +51,5 @@
 (if (version-mode)
     (printf "grzb version 0.1.1~n")
     (if file-to-read
-        (run (var-mode) (verbose-mode) file-to-read)
+        (run (var-mode) (termination-mode) (verbose-mode) file-to-read)
         (printf "grzb: expects an <input-file> on the command line~n")))

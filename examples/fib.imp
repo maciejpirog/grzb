@@ -8,37 +8,43 @@
 ; given by reference. If you want to give the value of a variable x,
 ; use (val x) as the argument.
 
-(define (fib n res)
-  {and (>= n 0) (init n)}
-  {FIB init-n res}
+(define* (fib n res)
+  {and (>= n 0) (init n)} ; precondition
+  {FIB init-n res}        ; postcondition
+  n                       ; variant (a value that decreases for each recursive call)
   (if (= n 0) (res := 0)
   (if (= n 1) (res := 1)
-      (begin
-        (fib (- n 2) a)
-	(fib (- n 1) b)
-	; Z3 needs a little help here
-	(assert {and (>= n 2) (= n init-n) (FIB (- n 2) a) (FIB (- n 1) b)})
-	(res := (+ a b))))))
+    (begin
+      (fib (- n 2) a)
+      (fib (- n 1) b)
+      ; Z3 needs a little help here
+      (assert {and (>= n 2) (= n init-n) (FIB (- n 2) a) (FIB (- n 1) b)})
+      (res := (+ a b))))))
 
 ; An iterative version of fib
 
-(define (swap x y)
+(define* (swap x y)
   {init x y}
   {and (= x init-y) (= y init-x)}
+  0
   (begin
     (tmp := x)
     (x := y)
     (y := tmp)))
 
-(define (fib-iter n res)
+(define* (fib-iter n res)
   {and (>= n 0) (init n)}
   {FIB init-n res}
+  n
   (begin
     (res := 0)
     (aux := 1)
-    (while {and (>= (- init-n n) 0)
-                (FIB (- init-n n) res)
-		(FIB (+ (- init-n n) 1) aux)}
+    (while* 
+      {and (>= n 0)
+           (>= (- init-n n) 0)
+           (FIB (- init-n n) res)
+           (FIB (+ (- init-n n) 1) aux)}
+      n      
       (not (= n 0))
       (begin
         (swap res aux) ; the default is by reference

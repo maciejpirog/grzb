@@ -7,6 +7,7 @@
 (require "../logic/solver.rkt")
 (require "../core/while.rkt")
 (require "../core/parse-prog.rkt")
+(require "../core/termination-check.rkt")
 
 (provide run)
 
@@ -20,8 +21,8 @@
           ['malformed-program 2]
           ['file-error        3])))
 
-(: run (-> Var-mode Boolean Any Any))
-(define (run var-mode verbose-mode filename)
+(: run (-> Var-mode Boolean Boolean Any Any))
+(define (run var-mode termination-mode verbose-mode filename)
 
   (define (fnf)
     (printf "Error: Can't open file ~v~n" filename)
@@ -49,14 +50,16 @@
                 [(errors es) (print-errors es)
                              (exit-grzb 'malformed-program)]
                 [(success p)
-                 (let*-values
-                   ([(obs)    (gen-obligations p)]
-                    [(obsa)   (with-axioms obs (list-axioms p))]
-                    [(_)      (if verbose-mode (print-obs obsa) false)]
-                    [(r)      (discharge* var-mode obsa)])
-                   (if (null? r)
+                 (let*
+                   ([obs   (gen-obligations p)]
+                    [obsa  (with-axioms obs (list-axioms p))]
+                    [_     (if verbose-mode (print-obs obsa) false)]
+                    [r     (discharge* var-mode obsa)]
+                    [t     (get-errors (terminates termination-mode p))])
+                   (if (and (null? r) (null? t))
                        (printf "ok~n")
                        (begin (print-errors r)
+                              (print-errors t)
                               (exit-grzb 'logical-error))))])))
         (begin (printf "Error: Malformed file name~n")
                (exit-grzb 'file-error)))))
@@ -71,22 +74,22 @@
 
   (define (desc s)
     (match s
-      ['user-defined                   "Explicit assertion"]
-      ['while-postcondition            "Postcondition of while loop"]
-      ['while-body-precondition        "Precondition of while loop body"]
-      ['while*-postcondition           "Postcondition of while* loop"]
-      ['while*-body-precondition       "Precondition of while* loop body"]
-      ['while*-variant-nonnegative     "Variant of while* nonnegative"]
-      ['procedure-precondition         "Procedure precondition"]
-      ['procedure*-precondition        "Procedure precondition"]
-      ['check                          "Explicit check"]
-      ['dummy                          "Dummy proof obligation"]))
+      ['user-defined                "Explicit assertion"]
+      ['while-postcondition         "Postcondition of while loop"]
+      ['while-body-precondition     "Precondition of while loop body"]
+      ['while*-postcondition        "Postcondition of while* loop"]
+      ['while*-body-precondition    "Precondition of while* loop body"]
+      ['while*-variant-nonnegative  "Variant of while* nonnegative"]
+      ['procedure-precondition      "Procedure precondition"]
+      ['procedure*-precondition     "Procedure precondition"]
+      ['check                       "Explicit check"]
+      ['dummy                       "Dummy proof obligation"]))
   
   (match ob
     [(proof-obligation m d f)
      (printf "~a at (~a:~a)~n" (desc d) (pos-line m) (pos-col m))
      (print-formula f)]))
-         
+
 (: print-obs (-> (Listof (Proof-obligation Pos)) Void))
 (define (print-obs obs)
   (if (null? obs)
@@ -101,7 +104,7 @@
 (: print-errors (-> (Listof (User-error Pos)) Void))
 (define (print-errors xs)
   (if (null? xs)
-      (printf "")
+      (void) ; (printf "")
       (match (first xs)
         [(user-error m d f)
          (printf "--- error ---~n")
@@ -120,7 +123,10 @@
                 (begin
                   (print-ob (car f))
                   (printf "Counterexample:~n~a" (cdr f)))
-                false)])
+                false)]
+           ['non-terminating
+            (printf "Non-terminating construct at (~a:~a)~n" (pos-line m) (pos-col m))
+            (printf "~a~n" f)])
          (printf "~n")
          (print-errors (rest xs))])))
 
